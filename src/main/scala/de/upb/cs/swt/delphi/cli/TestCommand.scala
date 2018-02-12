@@ -15,31 +15,17 @@ import scala.util.{Failure, Success}
 object TestCommand extends Command {
   override def execute(config: Config): Unit = {
 
-    implicit val system = ActorSystem()
-    implicit val executionContext = system.dispatcher
-    implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
-
     val uri = Uri(config.server)
     println(s"Contacting server ${uri}...")
-    val resp = Http().singleRequest(HttpRequest(uri = uri.withPath(uri.path + "/version")))
+    val resp = BlockingHttpClient.doGet(uri.withPath(uri.path + "/version"))
 
-    resp.onComplete {
-      case Success(res) =>
-        res.status match {
-           case x if x.isSuccess() => {
-             res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).foreach { body =>
-               println("Successfully contacted Delphi server. ")
-               println("Server version: " + body.utf8String)
-             } }
-             case _ => {
-               println(s"Could not validate server ${config.server}. Error: ${res.status}.")
-             }
-           }
-        system.terminate()
+    resp match {
+      case Success(res) => {
+        println("Successfully contacted Delphi server. ")
+        println("Server version: " + res)
+      }
       case Failure(_) => {
         println(s"Could not reach server ${config.server}.")
-
-        system.terminate()
       }
     }
 
