@@ -32,6 +32,7 @@ object BlockingHttpClient {
       case e : Exception => Failure(e)
     } finally {
       system.terminate()
+      Await.result(system.whenTerminated, Duration.Inf)
     }
 
   }
