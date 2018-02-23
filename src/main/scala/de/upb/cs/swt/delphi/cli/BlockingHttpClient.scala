@@ -10,8 +10,8 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
-/**
-  * Created by benhermann on 12.02.18.
+/***
+  * A blocking http client implemented using Akka HTTP
   */
 object BlockingHttpClient {
 
