@@ -9,7 +9,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-core" % "10.0.11"
 )
 
-lazy val root = (project in file(".")).
+lazy val cli = (project in file(".")).
   enablePlugins(JavaAppPackaging).
   enablePlugins(DockerPlugin).
   enablePlugins(BuildInfoPlugin).
@@ -17,4 +17,3 @@ lazy val root = (project in file(".")).
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.upb.cs.swt.delphi.cli"
   )
-
