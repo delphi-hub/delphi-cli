@@ -7,7 +7,7 @@ this repository is purely experimental!
 
 |branch | status | codacy |
 | :---: | :---: | :---: |
-| master | <img src="https://travis-ci.org/delphi-hub/delphi-cli.svg?branch=master"> | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9f94d02785594f35be1c6d0d9acba9e9)](https://www.codacy.com/app/bhermann/delphi-cli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=delphi-hub/delphi-cli&amp;utm_campaign=Badge_Grade)|
+| master | <img src="https://travis-ci.org/delphi-hub/delphi-cli.svg?branch=master"> | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/47046de0e8d64ae4b76191b7dae80075)](https://www.codacy.com/app/delphi-hub/delphi-cli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=delphi-hub/delphi-cli&amp;utm_campaign=Badge_Grade)|
 | develop | <img src="https://travis-ci.org/delphi-hub/delphi-cli.svg?branch=develop"> | |
 
 ## What is the Delphi Command-Line Interface?
