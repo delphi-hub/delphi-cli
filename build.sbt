@@ -1,6 +1,6 @@
 name := "delphi-cli"
 
-version := "1.0"
+version := "1.0.0-SNAPSHOT"
 
 maintainer := "Ben Hermann <ben.hermann@upb.de>"
 
