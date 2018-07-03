@@ -12,8 +12,16 @@ libraryDependencies ++= Seq(
 lazy val cli = (project in file(".")).
   enablePlugins(JavaAppPackaging).
   enablePlugins(DockerPlugin).
+  enablePlugins(ScalastylePlugin).
   enablePlugins(BuildInfoPlugin).
   settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.upb.cs.swt.delphi.cli"
   )
+
+lazy val scalastyleTask = taskKey[Unit]("scalastyleTask")
+scalastyleTask :={
+  scalastyle.in(Compile).toTask("").value
+  scalastyle.in(Test).toTask("").value
+}
+(test in Test) := ((test in Test) dependsOn scalastyleTask).value
