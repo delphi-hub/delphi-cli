@@ -4,9 +4,9 @@ version := "1.0.0-SNAPSHOT"
 
 maintainer := "Ben Hermann <ben.hermann@upb.de>"
 
-packageSummary := "Windows Package for Delphi-cli"
+packageSummary := "Windows Package for the Delphi CLI"
 
-packageDescription := """Windows Package for Delphi-cli"""
+packageDescription := """Windows Package for the Delphi CLI"""
 
 wixProductId := "ce07be71-510d-414a-92d4-dff47631848a"
 
