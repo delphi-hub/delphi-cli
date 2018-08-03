@@ -1,7 +1,7 @@
 package de.upb.cs.swt.delphi.cli.commands
 
 import de.upb.cs.swt.delphi.cli.Config
-import io.Source
+import scala.io.Source
 
 /**
   * The implementation of the retrieve command.
