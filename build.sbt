@@ -33,12 +33,5 @@ lazy val cli = (project in file(".")).
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.upb.cs.swt.delphi.cli"
   )
+scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
-lazy val scalastyleTask = taskKey[Unit]("scalastyleTask")
-scalastyleTask :={
-  scalastyle.in(Compile).toTask("").value
-  scalastyle.in(Test).toTask("").value
-}
-(scalastyleConfig in Compile):=file("project/scalastyle-config.xml")
-(scalastyleConfig in Test):=file("project/scalastyle-config.xml")
-(test in Test) := ((test in Test) dependsOn scalastyleTask).value
