@@ -6,6 +6,5 @@ package de.upb.cs.swt.delphi.cli
   * @param verbose Marker if logging should be verbose
   * @param mode The command to be run
   */
-case class Config (server : String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"), verbose: Boolean = false, mode : String = "") {
-
-}
+case class Config (server : String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"),
+                   verbose: Boolean = false, mode : String = "", args : List[String] = List(), opts : List[String] = List()) 
