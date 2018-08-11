@@ -23,6 +23,7 @@ debianPackageDependencies := Seq("java8-runtime-headless")
 lazy val cli = (project in file(".")).
   enablePlugins(JavaAppPackaging).
   enablePlugins(DockerPlugin).
+  enablePlugins(ScalastylePlugin).
   enablePlugins(BuildInfoPlugin).
   enablePlugins(DebianPlugin).
   enablePlugins(WindowsPlugin).
@@ -31,3 +32,5 @@ lazy val cli = (project in file(".")).
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.upb.cs.swt.delphi.cli"
   )
+scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
+
