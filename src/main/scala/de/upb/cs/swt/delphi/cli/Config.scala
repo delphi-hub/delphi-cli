@@ -7,6 +7,4 @@ package de.upb.cs.swt.delphi.cli
   * @param mode The command to be run
   */
 case class Config (server : String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"),
-                   verbose: Boolean = false, mode : String = "", args : List[String] = List(), opts : List[String] = List()) {
-
-}
+                   verbose: Boolean = false, mode : String = "", args : List[String] = List(), opts : List[String] = List()) 
