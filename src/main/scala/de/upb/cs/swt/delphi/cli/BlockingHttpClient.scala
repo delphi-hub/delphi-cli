@@ -21,7 +21,7 @@ object BlockingHttpClient {
     implicit val materializer: ActorMaterializer = ActorMaterializer(ActorMaterializerSettings(system))
 
     try {
-      val req: Future[HttpResponse] = Http(system).singleRequest(HttpRequest(method = HttpMethods.GET, uri = uri))
+      val req: Future[HttpResponse] = Http.get(system).singleRequest(HttpRequest(method = HttpMethods.GET, uri = uri))
       Await.result(req, Duration.Inf)
 
       val f = req.value.get.get.entity.dataBytes.runFold(ByteString(""))(_ ++ _)

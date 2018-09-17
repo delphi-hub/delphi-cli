@@ -15,7 +15,8 @@ scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-http-core" % "10.0.11"
+  "com.typesafe.akka" %% "akka-http-core" % "10.1.5",
+  "com.typesafe.akka" %% "akka-stream" % "2.5.12"
 )
 
 debianPackageDependencies := Seq("java8-runtime-headless")
@@ -33,4 +34,3 @@ lazy val cli = (project in file(".")).
     buildInfoPackage := "de.upb.cs.swt.delphi.cli"
   )
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
-
