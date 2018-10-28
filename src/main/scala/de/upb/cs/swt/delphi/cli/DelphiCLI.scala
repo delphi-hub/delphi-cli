@@ -19,7 +19,7 @@ package de.upb.cs.swt.delphi.cli
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import de.upb.cs.swt.delphi.cli.commands.{RetrieveCommand, TestCommand}
+import de.upb.cs.swt.delphi.cli.commands.{RetrieveCommand, SearchCommand, TestCommand}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext}
@@ -55,7 +55,11 @@ object DelphiCLI extends App {
             "with the filepath given in place of the ID")
         )
 
-      //cmd("search")
+      cmd("search").action((s, c) => c.copy(mode = "search"))
+        .text("Search artifact using a query.")
+        .children(
+          arg[String]("query").action((x,c) => c.copy(args = List(x))).text("The query to be used")
+        )
     }
   }
 
@@ -66,10 +70,11 @@ object DelphiCLI extends App {
       config.mode match {
         case "test" => TestCommand.execute(config)
         case "retrieve" => RetrieveCommand.execute(config)
-        case _ => println("Unknown command")
+        case "search" => SearchCommand.execute(config)
+        case x => println(s"Unknown command: $x")
       }
 
-    case None => println("nope")
+    case None =>
   }
 
   val poolShutdown = Http().shutdownAllConnectionPools()

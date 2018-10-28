@@ -14,10 +14,13 @@ wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
+libraryDependencies += "io.spray" %% "spray-json" % "1.3.3"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-core" % "10.1.5",
+  "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.5",
   "com.typesafe.akka" %% "akka-stream" % "2.5.12"
 )
+
 
 debianPackageDependencies := Seq("java8-runtime-headless")
 
