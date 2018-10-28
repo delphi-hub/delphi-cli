@@ -16,13 +16,21 @@
 
 package de.upb.cs.swt.delphi.cli
 
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.stream.ActorMaterializer
 import de.upb.cs.swt.delphi.cli.commands.{RetrieveCommand, TestCommand}
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext}
 
 
 /**
   * The application class for the Delphi command line interface
   */
 object DelphiCLI extends App {
+
+  implicit val system = ActorSystem()
 
   val cliParser = {
     new scopt.OptionParser[Config]("delphi-cli") {
@@ -64,5 +72,13 @@ object DelphiCLI extends App {
     case None => println("nope")
   }
 
+  val poolShutdown = Http().shutdownAllConnectionPools()
+  Await.result(poolShutdown, Duration.Inf)
 
+  implicit val ec: ExecutionContext = system.dispatcher
+  val terminationFuture = system.terminate()
+
+  terminationFuture.onComplete {
+    sys.exit(0)
+  }
 }

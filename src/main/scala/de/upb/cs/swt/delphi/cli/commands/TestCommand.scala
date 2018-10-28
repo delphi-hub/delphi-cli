@@ -16,6 +16,7 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
+import akka.actor.ActorSystem
 import de.upb.cs.swt.delphi.cli.Config
 
 /**
@@ -23,11 +24,11 @@ import de.upb.cs.swt.delphi.cli.Config
   * Tries to connect to the Delphi server and reports on the results of the version call.
   */
 object TestCommand extends Command {
-  override def execute(config: Config): Unit = executeGet(
+  override def execute(config: Config)(implicit system : ActorSystem): Unit = executeGet(
     "/version",
-    s => {
+    onSuccess = s => {
       println("Successfully contacted Delphi server. ")
       println("Server version: " + s)
     }
-  )(config)
+  )(config, system)
 }

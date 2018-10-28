@@ -16,9 +16,16 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-import akka.http.scaladsl.model.Uri
-import de.upb.cs.swt.delphi.cli.{BlockingHttpClient, Config}
+import akka.actor.ActorSystem
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.Uri.Query
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes, Uri}
+import akka.stream.ActorMaterializer
+import akka.util.ByteString
+import de.upb.cs.swt.delphi.cli.Config
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 /**
@@ -30,7 +37,7 @@ trait Command {
     * Executes the command implementation
     * @param config The current configuration for the command
     */
-  def execute(config: Config): Unit
+  def execute(config: Config)(implicit system : ActorSystem): Unit
 
   /**
     * Implements a common request type using currying to avoid code duplication
@@ -38,15 +45,30 @@ trait Command {
     * @param onSuccess The function to perform on the response (eg. printing it)
     * @param config The current configuration for the command
     */
-  protected def executeGet(target: String, onSuccess: String => Unit)(config: Config) : Unit = {
+  protected def executeGet(target: String, parameters: Map[String, String] = Map(), onSuccess: String => Unit)(config: Config, system : ActorSystem) : Unit = {
+    implicit val sys : ActorSystem = system
+    implicit val materializer = ActorMaterializer()
+    implicit val executionContext = sys.dispatcher
 
     val uri = Uri(config.server)
     println(s"Contacting server ${uri}...")
-    val resp = BlockingHttpClient.doGet(uri.withPath(uri.path + target))
 
-    resp match {
-      case Success(res) => onSuccess(res)
+    val responseFuture = Http().singleRequest(HttpRequest(uri = uri.withPath(uri.path + target).withQuery(Query(parameters))))
+
+    responseFuture.onComplete {
       case Failure(_) => println(s"Could not reach server ${config.server}.")
+      case _ =>
+    }
+
+    val result = Await.result(responseFuture, 30 seconds)
+    result match {
+      case HttpResponse(StatusCodes.OK, headers, entity, _) =>
+        entity.dataBytes.runFold(ByteString(""))(_ ++ _).foreach { body =>
+          onSuccess(body.utf8String)
+        }
+      case resp @ HttpResponse(code, _, _, _) =>
+        println("Request failed, response code: " + code)
+        resp.discardEntityBytes()
     }
 
   }

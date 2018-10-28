@@ -34,3 +34,5 @@ lazy val cli = (project in file(".")).
     buildInfoPackage := "de.upb.cs.swt.delphi.cli"
   )
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
+
+trapExit := false

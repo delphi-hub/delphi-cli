@@ -16,7 +16,9 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
+import akka.actor.ActorSystem
 import de.upb.cs.swt.delphi.cli.Config
+
 import scala.io.Source
 
 /**
@@ -24,7 +26,7 @@ import scala.io.Source
   * Retrieves the contents of the file at the endpoint specified by the config file, and prints them to stdout
   */
 object RetrieveCommand extends Command {
-  override def execute(config: Config): Unit = {
+  override def execute(config: Config)(implicit system : ActorSystem): Unit = {
     //Checks whether the ID should be loaded from a file or not, and either returns the first line
     //  of the given file if it is, or the specified ID otherwise
     def checkTarget: String = {
@@ -37,7 +39,8 @@ object RetrieveCommand extends Command {
     }
     executeGet(
       s"/retrieve/$checkTarget",
+      Map("pretty" -> ""),
       s => println(s)
-    )(config)
+    )(config, system)
   }
 }
