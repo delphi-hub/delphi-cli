@@ -31,11 +31,13 @@ Our software is available as a binary release on [GitHub](https://github.com/del
 ```
 $ delphi-cli --help
 Delphi Command Line Tool (1.0.0-SNAPSHOT)
-Usage: delphi-cli [test|search|retrieve] [options]
+Usage: delphi-cli [test|retrieve|search] [options] <args>...
 
-  --version         Prints the version of the command line tool.
-  --help            Prints this help text.
-  --server <value>  The url to the Delphi server
+  --version                Prints the version of the command line tool.
+  --help                   Prints this help text.
+  --server <value>         The url to the Delphi server
+  --raw                    Output the raw results
+  --silent                 Suppress non-result output
 ```
 By default the command-line tool uses the official Delphi server at https://delphi.cs.uni-paderborn.de to process queries.
 You can override this setting using the `--server` option or by setting the `DELPHI_SERVER` environment variable.
