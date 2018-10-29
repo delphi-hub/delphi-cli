@@ -48,11 +48,13 @@ object ResultBeautifier {
       table.tail.foreach { row: Iterable[String] => {
         val ar = at.addRow(row.asJavaCollection)
         asScalaBuffer(ar.getCells).tail.foreach { c => c.getContext.setTextAlignment(TextAlignment.RIGHT)}
-      }}
+      }}  
 
       at.getRenderer.setCWC(new CWC_LongestLine)
+      at.setPaddingLeft(1)
       at.setPaddingRight(1)
       at.getContext.setFrameTopMargin(1)
+      at.getContext.setFrameBottomMargin(1)
       at.getContext().setGridTheme(TA_GridThemes.INSIDE)
 
 
