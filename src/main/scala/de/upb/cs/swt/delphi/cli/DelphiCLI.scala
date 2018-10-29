@@ -32,10 +32,10 @@ object DelphiCLI extends App {
 
   implicit val system = ActorSystem()
 
+
   val cliParser = {
     new scopt.OptionParser[Config]("delphi-cli") {
       head("Delphi Command Line Tool", s"(${BuildInfo.version})")
-
 
       version("version").text("Prints the version of the command line tool.")
 
@@ -43,6 +43,9 @@ object DelphiCLI extends App {
       override def showUsageOnError = true
 
       opt[String]("server").action( (x,c) => c.copy(server = x)).text("The url to the Delphi server")
+      opt[Unit] (name = "raw").action((_,c) => c.copy(raw = true)).text("Output the raw results")
+      opt[Unit] (name = "silent").action((_,c) => c.copy(silent = true)).text("Suppress non-result output")
+
       checkConfig(c => if (c.server.isEmpty()) failure("Option server is required.") else success)
 
       cmd("test").action((_,c) => c.copy(mode = "test"))
@@ -66,16 +69,17 @@ object DelphiCLI extends App {
 
   cliParser.parse(args, Config()) match {
     case Some(config) =>
-      cliParser.showHeader()
+      if (!config.silent) cliParser.showHeader()
       config.mode match {
         case "test" => TestCommand.execute(config)
         case "retrieve" => RetrieveCommand.execute(config)
         case "search" => SearchCommand.execute(config)
-        case x => println(s"Unknown command: $x")
+        case x => config.consoleOutput.outputError(s"Unknown command: $x")
       }
 
     case None =>
   }
+
 
   val poolShutdown = Http().shutdownAllConnectionPools()
   Await.result(poolShutdown, Duration.Inf)

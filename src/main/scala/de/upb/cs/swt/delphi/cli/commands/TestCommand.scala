@@ -25,10 +25,9 @@ import de.upb.cs.swt.delphi.cli.Config
   */
 object TestCommand extends Command {
   override def execute(config: Config)(implicit system : ActorSystem): Unit = executeGet(
-    "/version",
-    onSuccess = s => {
-      println("Successfully contacted Delphi server. ")
-      println("Server version: " + s)
-    }
-  )(config, system)
+    "/version"
+  )(config, system).map(s => {
+    outputInformation(config)("Successfully contacted Delphi server. ")
+    outputInformation(config)("Server version: " + s)
+  })
 }

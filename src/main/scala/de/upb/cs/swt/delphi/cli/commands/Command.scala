@@ -24,7 +24,7 @@ import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import de.upb.cs.swt.delphi.cli.Config
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
@@ -42,16 +42,15 @@ trait Command {
   /**
     * Implements a common request type using currying to avoid code duplication
     * @param target The endpoint to perform a Get request on
-    * @param onSuccess The function to perform on the response (eg. printing it)
     * @param config The current configuration for the command
     */
-  protected def executeGet(target: String, parameters: Map[String, String] = Map(), onSuccess: String => Unit)(config: Config, system : ActorSystem) : Unit = {
+  protected def executeGet(target: String, parameters: Map[String, String] = Map())(config: Config, system : ActorSystem) : Option[String] = {
     implicit val sys : ActorSystem = system
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = sys.dispatcher
 
     val uri = Uri(config.server)
-    println(s"Contacting server ${uri}...")
+    config.consoleOutput.outputInformation(s"Contacting server ${uri}...")
 
     val responseFuture = Http().singleRequest(HttpRequest(uri = uri.withPath(uri.path + target).withQuery(Query(parameters))))
 
@@ -61,16 +60,23 @@ trait Command {
     }
 
     val result = Await.result(responseFuture, 30 seconds)
-    result match {
+    val resultString = result match {
       case HttpResponse(StatusCodes.OK, headers, entity, _) =>
-        entity.dataBytes.runFold(ByteString(""))(_ ++ _).foreach { body =>
-          onSuccess(body.utf8String)
+        entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
+          Some(body.utf8String)
         }
-      case resp @ HttpResponse(code, _, _, _) =>
-        println("Request failed, response code: " + code)
+      case resp @ HttpResponse(code, _, _, _) => {
+        outputError(config)("Artifact not found.")
         resp.discardEntityBytes()
+        Future(None)
+      }
     }
 
+    Await.result(resultString, Duration.Inf)
   }
+
+  protected def outputInformation(implicit config: Config): String => Unit = config.consoleOutput.outputInformation _
+  protected def outputResult(implicit config: Config): Any => Unit = config.consoleOutput.outputResult _
+  protected def outputError(implicit config: Config): String => Unit = config.consoleOutput.outputError _
 
 }

@@ -16,11 +16,18 @@
 
 package de.upb.cs.swt.delphi.cli
 
+import spray.json.JsObject
+
 /**
   * Represents a configuration for the Delphi CLI
-  * @param server A server base uri (Defaults to env variable DELPHI_SERVER)
+  *
+  * @param server  A server base uri (Defaults to env variable DELPHI_SERVER)
   * @param verbose Marker if logging should be verbose
-  * @param mode The command to be run
+  * @param mode    The command to be run
   */
-case class Config (server : String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"),
-                   verbose: Boolean = false, mode : String = "", args : List[String] = List(), opts : List[String] = List()) 
+case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"),
+                  verbose: Boolean = false, raw: Boolean = false, silent : Boolean = false, mode: String = "", args: List[String] = List(), opts: List[String] = List()) {
+
+  lazy val consoleOutput = new ConsoleOutput(this)
+
+}

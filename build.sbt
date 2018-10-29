@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-stream" % "2.5.12"
 )
 
+libraryDependencies += "de.vandermeer" % "asciitable" % "0.3.2"
 
 debianPackageDependencies := Seq("java8-runtime-headless")
 

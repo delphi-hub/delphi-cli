@@ -21,13 +21,17 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import de.upb.cs.swt.delphi.cli.Config
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
 import spray.json.DefaultJsonProtocol
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
 
 object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
   /**
@@ -40,23 +44,46 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     implicit val materializer = ActorMaterializer()
 
     def query = config.args.head
+    outputInformation(config)(s"Searching for artifacts matching <$query>.")
     implicit val queryFormat = jsonFormat2(Query)
 
     val baseUri = Uri(config.server)
-    val searchUri = baseUri.withPath(baseUri.path + "/search").withQuery(akka.http.scaladsl.model.Uri.Query(Map("pretty"->"")))
+    val prettyParam = Map("pretty" -> "")
+    val searchUri = baseUri.withPath(baseUri.path + "/search").withQuery(akka.http.scaladsl.model.Uri.Query(prettyParam))
     val responseFuture = Marshal(Query(query)).to[RequestEntity] flatMap { entity =>
       Http().singleRequest(HttpRequest(uri = searchUri, method = HttpMethods.POST, entity = entity))
     }
 
-    val result = Await.result(responseFuture, 30 seconds)
-    result match {
+    val response = Await.result(responseFuture, 10 seconds)
+    val resultFuture: Future[String] = response match {
       case HttpResponse(StatusCodes.OK, headers, entity, _) =>
-        entity.dataBytes.runFold(ByteString(""))(_ ++ _).foreach { body =>
-          println(body.utf8String)
+        entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
+          body.utf8String
         }
-      case resp @ HttpResponse(code, _, _, _) =>
-        println("Request failed, response code: " + code)
+      case resp @ HttpResponse(code, _, _, _) => {
+        outputError(config)("Request failed, response code: " + code)
         resp.discardEntityBytes()
+        Future("")
+      }
+    }
+
+    val result = Await.result(resultFuture, Duration.Inf)
+
+    if(config.raw) {
+      outputResult(config)(result)
+    } else {
+      val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
+
+      unmarshalledFuture.onComplete {
+        case Failure(e) => {
+          outputError(config)(result)
+        }
+        case _ =>
+      }
+
+      val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
+      outputInformation(config)(s"Found ${unmarshalled.size} item(s).")
+      outputResult(config)(unmarshalled)
     }
   }
 

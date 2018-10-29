@@ -17,16 +17,31 @@
 package de.upb.cs.swt.delphi.cli.commands
 
 import akka.actor.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
 import de.upb.cs.swt.delphi.cli.Config
+import de.upb.cs.swt.delphi.cli.artifacts.{RetrieveResult, SearchResult}
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
+import de.upb.cs.swt.delphi.cli.commands.SearchCommand.{outputError, outputInformation, outputResult}
+import spray.json.DefaultJsonProtocol
 
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 import scala.io.Source
+import scala.util.{Failure, Success}
 
 /**
   * The implementation of the retrieve command.
   * Retrieves the contents of the file at the endpoint specified by the config file, and prints them to stdout
   */
-object RetrieveCommand extends Command {
+object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
+
+
   override def execute(config: Config)(implicit system : ActorSystem): Unit = {
+    implicit val ec = system.dispatcher
+    implicit val materializer = ActorMaterializer()
+
     //Checks whether the ID should be loaded from a file or not, and either returns the first line
     //  of the given file if it is, or the specified ID otherwise
     def checkTarget: String = {
@@ -37,10 +52,30 @@ object RetrieveCommand extends Command {
         target
       } else config.args.head
     }
-    executeGet(
+    val result = executeGet(
       s"/retrieve/$checkTarget",
-      Map("pretty" -> ""),
-      s => println(s)
+      Map("pretty" -> "")
     )(config, system)
+
+    result.map(s => {
+      if (config.raw) {
+        outputResult(config)(s)
+      } else {
+        val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
+
+        unmarshalledFuture.onComplete {
+          case Failure(e) => {
+            outputError(config)(s)
+          }
+          case _ =>
+        }
+
+        val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
+        outputInformation(config)(s"Found ${unmarshalled.size} item(s).")
+        outputResult(config)(unmarshalled)
+
+        Await.ready(unmarshalledFuture, Duration.Inf)
+      }
+    })
   }
 }
