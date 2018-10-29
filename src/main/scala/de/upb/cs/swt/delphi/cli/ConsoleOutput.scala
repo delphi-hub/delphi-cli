@@ -30,6 +30,7 @@ class ConsoleOutput(config: Config) {
         case true => value.toString
         case false => {
           value match {
+            case Seq() => ""
             case searchResults : Seq[SearchResult] if searchResults.head.isInstanceOf[SearchResult]  => ResultBeautifier.beautifySearchResults(searchResults)
             case retrieveResults : Seq[RetrieveResult] if retrieveResults.head.isInstanceOf[RetrieveResult]  => ResultBeautifier.beautifyRetrieveResults(retrieveResults)
             case _ => value.toString
