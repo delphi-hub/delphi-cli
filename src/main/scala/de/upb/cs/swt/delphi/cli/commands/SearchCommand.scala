@@ -30,12 +30,11 @@ import akka.util.ByteString
 import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import de.upb.cs.swt.delphi.cli.commands.RetrieveCommand.reportResult
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
   /**
