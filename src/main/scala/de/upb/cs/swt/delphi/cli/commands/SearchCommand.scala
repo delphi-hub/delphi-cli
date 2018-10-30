@@ -48,7 +48,8 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     implicit val materializer = ActorMaterializer()
 
     def query = config.query
-    information(config)(s"Searching for artifacts matching <$query>.")
+
+    information(config)(s"Searching for artifacts matching ${'"'}$query${'"'}.")
     val start = System.nanoTime()
     implicit val queryFormat = jsonFormat2(Query)
 
