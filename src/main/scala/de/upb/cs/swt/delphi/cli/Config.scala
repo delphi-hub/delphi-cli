@@ -16,8 +16,6 @@
 
 package de.upb.cs.swt.delphi.cli
 
-import spray.json.JsObject
-
 /**
   * Represents a configuration for the Delphi CLI
   *
@@ -31,6 +29,7 @@ case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://d
                   silent: Boolean = false,
                   mode: String = "",
                   query : String = "",
+                  limit : Option[Int] = None,
                   id : String = "",
                   args: List[String] = List(),
                   opts: List[String] = List()) {

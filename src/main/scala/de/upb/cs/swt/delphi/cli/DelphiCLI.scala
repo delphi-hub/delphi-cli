@@ -61,7 +61,8 @@ object DelphiCLI extends App {
       cmd("search").action((s, c) => c.copy(mode = "search"))
         .text("Search artifact using a query.")
         .children(
-          arg[String]("query").action((x,c) => c.copy(query = x)).text("The query to be used")
+          arg[String]("query").action((x,c) => c.copy(query = x)).text("The query to be used."),
+          opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned.")
         )
     }
   }

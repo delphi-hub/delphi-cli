@@ -56,7 +56,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     val baseUri = Uri(config.server)
     val prettyParam = Map("pretty" -> "")
     val searchUri = baseUri.withPath(baseUri.path + "/search").withQuery(akka.http.scaladsl.model.Uri.Query(prettyParam))
-    val responseFuture = Marshal(Query(query)).to[RequestEntity] flatMap { entity =>
+    val responseFuture = Marshal(Query(query, config.limit)).to[RequestEntity] flatMap { entity =>
       Http().singleRequest(HttpRequest(uri = searchUri, method = HttpMethods.POST, entity = entity))
     }
 
@@ -66,7 +66,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
         entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
           body.utf8String
         }
-      case resp @ HttpResponse(code, _, _, _) => {
+      case resp@HttpResponse(code, _, _, _) => {
         error(config)("Request failed, response code: " + code)
         resp.discardEntityBytes()
         Future("")
@@ -91,11 +91,25 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
       }
 
       val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-      information(config)(s"Found ${unmarshalled.size} item(s).")
+      val capMessage = {
+        config.limit match {
+          case Some(limit) if (limit <= unmarshalled.size)
+          => s"Results may be capped by result limit set to $limit."
+          case None if (unmarshalled.size >= 50)
+          => "Results may be capped by default limit of 50 returned results. Use --limit to extend the result set."
+          case _
+          => ""
+        }
+      }
+      information(config)(s"Found ${unmarshalled.size} item(s). $capMessage")
       reportResult(config)(unmarshalled)
+
+
       information(config)(f"Query took $took%.2fs.")
     }
   }
 
-  case class Query(query : String, pretty : Option[Boolean] = Some(true))
+  case class Query(query: String,
+                   limit: Option[Int] = None)
+
 }
