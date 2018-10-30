@@ -1,6 +1,6 @@
 scalaVersion := "2.12.4"
 
-name := "delphi-cli"
+name := "delphi"
 version := "1.0.0-SNAPSHOT"
 maintainer := "Ben Hermann <ben.hermann@upb.de>"
 
