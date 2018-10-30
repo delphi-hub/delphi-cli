@@ -16,6 +16,9 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
+
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
@@ -46,6 +49,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
 
     def query = config.query
     information(config)(s"Searching for artifacts matching <$query>.")
+    val start = System.nanoTime()
     implicit val queryFormat = jsonFormat2(Query)
 
     val baseUri = Uri(config.server)
@@ -70,9 +74,12 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
 
     val result = Await.result(resultFuture, Duration.Inf)
 
-    if(config.raw || result.equals("")) {
+    val took = (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS)
+
+    if (config.raw || result.equals("")) {
       reportResult(config)(result)
     } else {
+
       val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
 
       unmarshalledFuture.onComplete {
@@ -85,6 +92,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
       val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
       information(config)(s"Found ${unmarshalled.size} item(s).")
       reportResult(config)(unmarshalled)
+      information(config)(f"Query took $took%.2fs.")
     }
   }
 
