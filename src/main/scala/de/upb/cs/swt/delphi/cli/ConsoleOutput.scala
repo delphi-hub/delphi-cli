@@ -21,10 +21,12 @@ import de.upb.cs.swt.delphi.cli.artifacts.{RetrieveResult, SearchResult}
 class ConsoleOutput(config: Config) {
 
   def outputInformation(value: String): Unit = {
+    //noinspection ScalaStyle
     if (!config.silent) println(value)
   }
 
   def outputResult(value: Any): Unit = {
+    //noinspection ScalaStyle
     println(
       config.raw match {
         case true => value.toString
@@ -41,6 +43,7 @@ class ConsoleOutput(config: Config) {
   }
 
   def outputError(value : String) : Unit = {
+    //noinspection ScalaStyle
     println(value)
   }
 }
