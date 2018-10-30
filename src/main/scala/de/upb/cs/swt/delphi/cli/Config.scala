@@ -30,6 +30,8 @@ case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://d
                   raw: Boolean = false,
                   silent: Boolean = false,
                   mode: String = "",
+                  query : String = "",
+                  id : String = "",
                   args: List[String] = List(),
                   opts: List[String] = List()) {
 

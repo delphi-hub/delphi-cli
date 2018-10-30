@@ -51,7 +51,7 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
         source.close()
         target
       } else {
-        config.args.head
+        config.id
       }
     }
     val result = executeGet(

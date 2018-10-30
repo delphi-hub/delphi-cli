@@ -53,7 +53,7 @@ object DelphiCLI extends App {
       cmd("retrieve").action((s,c) => c.copy(mode = "retrieve"))
         .text("Retrieve a project's description, specified by ID.")
         .children(
-          arg[String]("ID").action((x, c) => c.copy(args = List(x))).text("The ID of the project to retrieve"),
+          arg[String]("id").action((x, c) => c.copy(id = x)).text("The ID of the project to retrieve"),
           opt[Unit]('f', "file").action((_, c) => c.copy(opts = List("file"))).text("Use to load the ID from file, " +
             "with the filepath given in place of the ID")
         )
@@ -61,7 +61,7 @@ object DelphiCLI extends App {
       cmd("search").action((s, c) => c.copy(mode = "search"))
         .text("Search artifact using a query.")
         .children(
-          arg[String]("query").action((x,c) => c.copy(args = List(x))).text("The query to be used")
+          arg[String]("query").action((x,c) => c.copy(query = x)).text("The query to be used")
         )
     }
   }
