@@ -27,7 +27,7 @@ object TestCommand extends Command {
   override def execute(config: Config)(implicit system : ActorSystem): Unit = executeGet(
     "/version"
   )(config, system).map(s => {
-    outputInformation(config)("Successfully contacted Delphi server. ")
-    outputInformation(config)("Server version: " + s)
+    information(config)("Successfully contacted Delphi server. ")
+    information(config)("Server version: " + s)
   })
 }

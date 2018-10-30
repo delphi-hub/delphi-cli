@@ -55,7 +55,7 @@ trait Command {
     val responseFuture = Http().singleRequest(HttpRequest(uri = uri.withPath(uri.path + target).withQuery(Query(parameters))))
 
     responseFuture.onComplete {
-      case Failure(_) => println(s"Could not reach server ${config.server}.")
+      case Failure(_) => error(config)(s"Could not reach server ${config.server}.")
       case _ =>
     }
 
@@ -66,7 +66,7 @@ trait Command {
           Some(body.utf8String)
         }
       case resp @ HttpResponse(code, _, _, _) => {
-        outputError(config)("Artifact not found.")
+        error(config)("Artifact not found.")
         resp.discardEntityBytes()
         Future(None)
       }
@@ -75,8 +75,8 @@ trait Command {
     Await.result(resultString, Duration.Inf)
   }
 
-  protected def outputInformation(implicit config: Config): String => Unit = config.consoleOutput.outputInformation _
-  protected def outputResult(implicit config: Config): Any => Unit = config.consoleOutput.outputResult _
-  protected def outputError(implicit config: Config): String => Unit = config.consoleOutput.outputError _
+  protected def information(implicit config: Config): String => Unit = config.consoleOutput.outputInformation _
+  protected def reportResult(implicit config: Config): Any => Unit = config.consoleOutput.outputResult _
+  protected def error(implicit config: Config): String => Unit = config.consoleOutput.outputError _
 
 }

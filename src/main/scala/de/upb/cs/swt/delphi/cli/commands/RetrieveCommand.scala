@@ -23,7 +23,7 @@ import akka.stream.ActorMaterializer
 import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.{RetrieveResult, SearchResult}
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import de.upb.cs.swt.delphi.cli.commands.SearchCommand.{outputError, outputInformation, outputResult}
+import de.upb.cs.swt.delphi.cli.commands.SearchCommand.{error, information, reportResult}
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.Await
@@ -61,20 +61,20 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
 
     result.map(s => {
       if (config.raw) {
-        outputResult(config)(s)
+        reportResult(config)(s)
       } else {
         val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
 
         unmarshalledFuture.onComplete {
           case Failure(e) => {
-            outputError(config)(s)
+            error(config)(s)
           }
           case _ =>
         }
 
         val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-        outputInformation(config)(s"Found ${unmarshalled.size} item(s).")
-        outputResult(config)(unmarshalled)
+        information(config)(s"Found ${unmarshalled.size} item(s).")
+        reportResult(config)(unmarshalled)
 
         Await.ready(unmarshalledFuture, Duration.Inf)
       }

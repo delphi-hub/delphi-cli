@@ -27,6 +27,7 @@ import akka.util.ByteString
 import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
+import de.upb.cs.swt.delphi.cli.commands.RetrieveCommand.reportResult
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
@@ -44,7 +45,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     implicit val materializer = ActorMaterializer()
 
     def query = config.query
-    outputInformation(config)(s"Searching for artifacts matching <$query>.")
+    information(config)(s"Searching for artifacts matching <$query>.")
     implicit val queryFormat = jsonFormat2(Query)
 
     val baseUri = Uri(config.server)
@@ -61,7 +62,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
           body.utf8String
         }
       case resp @ HttpResponse(code, _, _, _) => {
-        outputError(config)("Request failed, response code: " + code)
+        error(config)("Request failed, response code: " + code)
         resp.discardEntityBytes()
         Future("")
       }
@@ -69,21 +70,21 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
 
     val result = Await.result(resultFuture, Duration.Inf)
 
-    if(config.raw) {
-      outputResult(config)(result)
+    if(config.raw || result.equals("")) {
+      reportResult(config)(result)
     } else {
       val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
 
       unmarshalledFuture.onComplete {
         case Failure(e) => {
-          outputError(config)(result)
+          error(config)(result)
         }
         case _ =>
       }
 
       val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-      outputInformation(config)(s"Found ${unmarshalled.size} item(s).")
-      outputResult(config)(unmarshalled)
+      information(config)(s"Found ${unmarshalled.size} item(s).")
+      reportResult(config)(unmarshalled)
     }
   }
 
