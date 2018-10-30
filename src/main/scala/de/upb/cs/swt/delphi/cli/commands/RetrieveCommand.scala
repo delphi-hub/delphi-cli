@@ -73,7 +73,7 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
         }
 
         val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-        information(config)(s"Found ${unmarshalled.size} item(s).")
+        success(config)(s"Found ${unmarshalled.size} item(s).")
         reportResult(config)(unmarshalled)
 
         Await.ready(unmarshalledFuture, Duration.Inf)

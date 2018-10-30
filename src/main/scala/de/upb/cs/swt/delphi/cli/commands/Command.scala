@@ -78,5 +78,6 @@ trait Command {
   protected def information(implicit config: Config): String => Unit = config.consoleOutput.outputInformation _
   protected def reportResult(implicit config: Config): Any => Unit = config.consoleOutput.outputResult _
   protected def error(implicit config: Config): String => Unit = config.consoleOutput.outputError _
+  protected def success(implicit config: Config): String => Unit = config.consoleOutput.outputSuccess _
 
 }

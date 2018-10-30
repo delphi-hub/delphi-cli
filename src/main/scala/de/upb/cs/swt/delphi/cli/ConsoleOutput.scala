@@ -25,6 +25,11 @@ class ConsoleOutput(config: Config) {
     if (!config.silent) println(value)
   }
 
+  def outputSuccess(value : String) : Unit = {
+    //noinspection ScalaStyle
+    if(!config.silent) println(fansi.Color.Green(value))
+  }
+
   def outputResult(value: Any): Unit = {
     //noinspection ScalaStyle
     println(
@@ -44,6 +49,6 @@ class ConsoleOutput(config: Config) {
 
   def outputError(value : String) : Unit = {
     //noinspection ScalaStyle
-    println(value)
+    println(fansi.Color.Red(value))
   }
 }

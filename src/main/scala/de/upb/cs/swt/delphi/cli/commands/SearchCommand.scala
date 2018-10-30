@@ -101,7 +101,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
           => ""
         }
       }
-      information(config)(s"Found ${unmarshalled.size} item(s). $capMessage")
+      success(config)(s"Found ${unmarshalled.size} item(s). $capMessage")
       reportResult(config)(unmarshalled)
 
 
