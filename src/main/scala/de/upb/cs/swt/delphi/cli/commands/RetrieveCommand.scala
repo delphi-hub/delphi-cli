@@ -50,7 +50,9 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
         val target = source.getLines.next()
         source.close()
         target
-      } else config.args.head
+      } else {
+        config.args.head
+      }
     }
     val result = executeGet(
       s"/retrieve/$checkTarget",

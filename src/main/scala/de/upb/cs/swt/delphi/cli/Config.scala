@@ -26,7 +26,12 @@ import spray.json.JsObject
   * @param mode    The command to be run
   */
 case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"),
-                  verbose: Boolean = false, raw: Boolean = false, silent : Boolean = false, mode: String = "", args: List[String] = List(), opts: List[String] = List()) {
+                  verbose: Boolean = false,
+                  raw: Boolean = false,
+                  silent: Boolean = false,
+                  mode: String = "",
+                  args: List[String] = List(),
+                  opts: List[String] = List()) {
 
   lazy val consoleOutput = new ConsoleOutput(this)
 
