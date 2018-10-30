@@ -16,7 +16,6 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
@@ -34,7 +33,7 @@ import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.Failure
+import scala.util.{Failure, Success}
 
 object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
   /**
@@ -50,8 +49,8 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
 
     information(config)(s"Searching for artifacts matching ${'"'}$query${'"'}.")
     val start = System.nanoTime()
-    implicit val queryFormat = jsonFormat2(Query)
 
+    implicit val queryFormat = jsonFormat2(Query)
     val baseUri = Uri(config.server)
     val prettyParam = Map("pretty" -> "")
     val searchUri = baseUri.withPath(baseUri.path + "/search").withQuery(akka.http.scaladsl.model.Uri.Query(prettyParam))
@@ -79,33 +78,36 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     if (config.raw || result.equals("")) {
       reportResult(config)(result)
     } else {
-
       val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
 
-      unmarshalledFuture.onComplete {
+      val processFuture = unmarshalledFuture.transform {
+        case Success(unmarshalled) => {
+          processResults(config, unmarshalled, took)
+          Success(unmarshalled)
+        }
         case Failure(e) => {
           error(config)(result)
-        }
-        case _ =>
-      }
-
-      val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-      val capMessage = {
-        config.limit match {
-          case Some(limit) if (limit <= unmarshalled.size)
-          => s"Results may be capped by result limit set to $limit."
-          case None if (unmarshalled.size >= 50)
-          => "Results may be capped by default limit of 50 returned results. Use --limit to extend the result set."
-          case _
-          => ""
+          Failure(e)
         }
       }
-      success(config)(s"Found ${unmarshalled.size} item(s). $capMessage")
-      reportResult(config)(unmarshalled)
-
-
-      information(config)(f"Query took $took%.2fs.")
     }
+  }
+
+  private def processResults(config: Config, results: List[SearchResult], queryRuntime: Double) = {
+    val capMessage = {
+      config.limit match {
+        case Some(limit) if (limit <= results.size)
+        => s"Results may be capped by result limit set to $limit."
+        case None if (results.size >= 50)
+        => "Results may be capped by default limit of 50 returned results. Use --limit to extend the result set."
+        case _
+        => ""
+      }
+    }
+    success(config)(s"Found ${results.size} item(s). $capMessage")
+    reportResult(config)(results)
+
+    information(config)(f"Query took $queryRuntime%.2fs.")
   }
 
   case class Query(query: String,

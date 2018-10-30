@@ -21,9 +21,8 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import de.upb.cs.swt.delphi.cli.Config
-import de.upb.cs.swt.delphi.cli.artifacts.{RetrieveResult, SearchResult}
+import de.upb.cs.swt.delphi.cli.artifacts.RetrieveResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import de.upb.cs.swt.delphi.cli.commands.SearchCommand.{error, information, reportResult}
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.Await
@@ -38,7 +37,7 @@ import scala.util.{Failure, Success}
 object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
 
 
-  override def execute(config: Config)(implicit system : ActorSystem): Unit = {
+  override def execute(config: Config)(implicit system: ActorSystem): Unit = {
     implicit val ec = system.dispatcher
     implicit val materializer = ActorMaterializer()
 
@@ -54,6 +53,7 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
         config.id
       }
     }
+
     val result = executeGet(
       s"/retrieve/$checkTarget",
       Map("pretty" -> "")
@@ -65,18 +65,19 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
       } else {
         val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
 
-        unmarshalledFuture.onComplete {
+        unmarshalledFuture.transform {
+          case Success(unmarshalled) => {
+            val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
+            success(config)(s"Found ${unmarshalled.size} item(s).")
+            reportResult(config)(unmarshalled)
+
+            Success(unmarshalled)
+          }
           case Failure(e) => {
             error(config)(s)
+            Failure(e)
           }
-          case _ =>
         }
-
-        val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-        success(config)(s"Found ${unmarshalled.size} item(s).")
-        reportResult(config)(unmarshalled)
-
-        Await.ready(unmarshalledFuture, Duration.Inf)
       }
     })
   }
