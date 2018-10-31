@@ -65,24 +65,51 @@ object ResultBeautifier {
 
   def beautifyRetrieveResults(results : Seq[RetrieveResult]) : String = {
     results.map { r =>
-      val at = new AsciiTable()
 
-      at.addRule()
+      val basedata = {
+        val at = new AsciiTable()
 
-      // add body
-      for(
-        (key, value) <- r.metricResults.toList.sortBy(x => x._1)
-      ) {
-        val ar = at.addRow(Seq(key, value).asJavaCollection)
-        asScalaBuffer(ar.getCells).tail.foreach { c => c.getContext.setTextAlignment(TextAlignment.RIGHT)}
+        at.addRule()
+
+        at.addRow("source", r.metadata.source)
+        at.addRow("artifactId", r.metadata.artifactId)
+        at.addRow("groupId", r.metadata.groupId)
+        at.addRow("version", r.metadata.version)
+        at.addRow("discovered at", r.metadata.discovered)
+        at.addRule()
+        at.getRenderer.setCWC(new CWC_LongestLine)
+        at.setPaddingLeftRight(1)
+        at.getContext.setFrameLeftMargin(2)
+        "↳ Basic information" + System.lineSeparator() +  at.render() + System.lineSeparator()
       }
 
-      at.addRule()
+      val metrics = r.metricResults.size match {
+        case 0 => ""
+        case _ => {
+          val at = new AsciiTable()
 
-      at.getRenderer.setCWC(new CWC_LongestLine)
-      at.setPaddingRight(1)
+          at.addRule()
 
-      System.lineSeparator() + r.toMavenIdentifier() + System.lineSeparator() + at.render()
+          // add body
+          for(
+            (key, value) <- r.metricResults.toList.sortBy(x => x._1)
+          ) {
+            val ar = at.addRow(Seq(key, value).asJavaCollection)
+            asScalaBuffer(ar.getCells).tail.foreach { c => c.getContext.setTextAlignment(TextAlignment.RIGHT)}
+          }
+
+          at.addRule()
+
+          at.getRenderer.setCWC(new CWC_LongestLine)
+          at.setPaddingLeftRight(1)
+          at.getContext.setFrameLeftMargin(2)
+          at.getContext.setFrameBottomMargin(1)
+          "↳ Metrics:" + System.lineSeparator() + at.render()
+        }
+      }
+
+      System.lineSeparator() + r.toMavenIdentifier() + System.lineSeparator()  + basedata + metrics + System.lineSeparator()
+
     }.fold("")(_ + _)
   }
 }
