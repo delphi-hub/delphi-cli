@@ -38,7 +38,12 @@ class ConsoleOutput(config: Config) {
         case false => {
           value match {
             case Seq() => ""
-            case searchResults : Seq[SearchResult] if searchResults.head.isInstanceOf[SearchResult]  => ResultBeautifier.beautifySearchResults(searchResults)
+            case searchResults : Seq[SearchResult] if searchResults.head.isInstanceOf[SearchResult]  => {
+              config.list match {
+                case true => searchResults.map(_.toMavenIdentifier()).mkString(System.lineSeparator())
+                case false => ResultBeautifier.beautifySearchResults(searchResults)
+              }
+            }
             case retrieveResults : Seq[RetrieveResult] if retrieveResults.head.isInstanceOf[RetrieveResult]  => ResultBeautifier.beautifyRetrieveResults(retrieveResults)
             case _ => value.toString
           }

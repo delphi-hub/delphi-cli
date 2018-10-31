@@ -62,7 +62,8 @@ object DelphiCLI extends App {
         .text("Search artifact using a query.")
         .children(
           arg[String]("query").action((x,c) => c.copy(query = x)).text("The query to be used."),
-          opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned.")
+          opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned."),
+          opt[Unit](name="list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)")
         )
     }
   }
