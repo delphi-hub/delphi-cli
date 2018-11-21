@@ -35,7 +35,7 @@ object DelphiCLI extends App {
 
   val cliParser = {
     new scopt.OptionParser[Config]("delphi-cli") {
-      head("Delphi Command Line Tool", s"(Lala)") // ${BuildInfo.version}
+      head("Delphi Command Line Tool", s"(${BuildInfo.version})")
 
       version("version").text("Prints the version of the command line tool.")
 
