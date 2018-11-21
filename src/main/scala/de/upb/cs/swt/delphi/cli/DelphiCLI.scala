@@ -35,7 +35,7 @@ object DelphiCLI extends App {
 
   val cliParser = {
     new scopt.OptionParser[Config]("delphi-cli") {
-      head("Delphi Command Line Tool", s"(${BuildInfo.version})")
+      head("Delphi Command Line Tool", s"(Lala)") // ${BuildInfo.version}
 
       version("version").text("Prints the version of the command line tool.")
 
@@ -55,7 +55,7 @@ object DelphiCLI extends App {
         .children(
           arg[String]("id").action((x, c) => c.copy(id = x)).text("The ID of the project to retrieve"),
           opt[Unit]('f', "file").action((_, c) => c.copy(opts = List("file"))).text("Use to load the ID from file, " +
-            "with the filepath given in place of the ID")
+            "with the filepath given in place of the ID"), opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)")
         )
 
       cmd("search").action((s, c) => c.copy(mode = "search"))
@@ -63,7 +63,8 @@ object DelphiCLI extends App {
         .children(
           arg[String]("query").action((x,c) => c.copy(query = x)).text("The query to be used."),
           opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned."),
-          opt[Unit](name="list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)")
+          opt[Unit](name="list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)"),
+          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)")
         )
     }
   }

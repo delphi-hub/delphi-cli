@@ -27,6 +27,7 @@ libraryDependencies += "io.spray" %% "spray-json" % "1.3.3"
 libraryDependencies += "de.vandermeer" % "asciitable" % "0.3.2"
 libraryDependencies += "com.lihaoyi" %% "fansi" % "0.2.5"
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
+libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
 
 debianPackageDependencies := Seq("java8-runtime-headless")
 

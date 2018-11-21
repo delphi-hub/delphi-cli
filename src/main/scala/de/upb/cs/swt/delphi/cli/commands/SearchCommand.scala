@@ -77,7 +77,9 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
 
     if (config.raw || result.equals("")) {
       reportResult(config)(result)
-    } else {
+    }
+
+    if(!(config.raw || result.equals("")) || !config.csv.equals("")) {
       val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
 
       val processFuture = unmarshalledFuture.transform {
@@ -108,6 +110,9 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     reportResult(config)(results)
 
     information(config)(f"Query took $queryRuntime%.2fs.")
+
+    if(!config.csv.equals(""))
+      exportResult(config)(results)
   }
 
   case class Query(query: String,

@@ -80,4 +80,6 @@ trait Command {
   protected def error(implicit config: Config): String => Unit = config.consoleOutput.outputError _
   protected def success(implicit config: Config): String => Unit = config.consoleOutput.outputSuccess _
 
+  protected def exportResult(implicit config: Config): Any => Unit = config.csvOutput.exportResult _
+
 }
