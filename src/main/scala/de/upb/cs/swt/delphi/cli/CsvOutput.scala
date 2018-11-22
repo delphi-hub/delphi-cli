@@ -51,10 +51,11 @@ class CsvOutput(config: Config) {
   }
 
   def resultsToCsv(results : Seq[Result]) : Seq[Array[String]] = {
-    if (results.isEmpty) {
-      Seq.empty[Array[String]]
+    val headOption = results.headOption.getOrElse()
+    if (!headOption.isInstanceOf[Result]) {
+        Seq.empty[Array[String]]
     } else {
-      val fieldNames = results.headOption.get.fieldNames()
+      val fieldNames = headOption.asInstanceOf[Result].fieldNames()
       val tableHeader : Array[String] =
         fieldNames.+:("discovered at").+:("version").+:("groupId").+:("artifactId").+:("source").+:("Id").toArray
       results.map {
