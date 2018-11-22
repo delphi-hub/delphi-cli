@@ -20,11 +20,7 @@ import java.io.{BufferedWriter, FileWriter}
 
 import de.upb.cs.swt.delphi.cli.artifacts.Result
 import au.com.bytecode.opencsv.CSVWriter
-import de.upb.cs.swt.delphi.cli.commands.SearchCommand.information
-import de.vandermeer.asciitable.{AsciiTable, CWC_LongestLine}
-import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
 
-import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 
 /**
@@ -38,32 +34,35 @@ import scala.collection.JavaConverters._
 class CsvOutput(config: Config) {
 
   def exportResult(value: Any): Unit = {
-    var table = value match {
-      case results : Seq[Result] if results.head.isInstanceOf[Result] => resultsToCsv(results)
-      case _ => {
-        println("Error: results are in unknown format.")
-        return
+    printToCsv(
+      value match {
+        case results :
+          Seq[Result] if results.headOption.getOrElse(Seq.empty[Array[String]]).isInstanceOf[Result] => resultsToCsv(results)
+        case _ => Seq.empty[Array[String]]
       }
-    }
+    )
+  }
 
+  def printToCsv(table : Seq[Array[String]]): Unit = {
     val outputFile = new BufferedWriter(new FileWriter(config.csv, /* append = */false))
     val csvWriter = new CSVWriter(outputFile)
     csvWriter.writeAll(seqAsJavaList(table))
     outputFile.close()
-    println("Results written to file '" + config.csv + "'")
   }
 
   def resultsToCsv(results : Seq[Result]) : Seq[Array[String]] = {
-    if (results.size != 0) {
-      val fieldNames = results.head.fieldNames()
-      val tableHeader : Array[String] = (fieldNames.+:("discovered at").+:("version").+:("groupId").+:("artifactId").+:("source").+:("Id")).toArray
-      val tableBody: Seq[Array[String]] = results.map {
+    if (results.isEmpty) {
+      Seq.empty[Array[String]]
+    } else {
+      val fieldNames = results.headOption.get.fieldNames()
+      val tableHeader : Array[String] =
+        fieldNames.+:("discovered at").+:("version").+:("groupId").+:("artifactId").+:("source").+:("Id").toArray
+      results.map {
         e => {
-          Array(e.id, e.metadata.source, e.metadata.artifactId, e.metadata.groupId, e.metadata.version, e.metadata.discovered).++(fieldNames.map(f => e.metricResults(f).toString))
+          Array(e.id, e.metadata.source, e.metadata.artifactId, e.metadata.groupId, e.metadata.version,
+            e.metadata.discovered).++(fieldNames.map(f => e.metricResults(f).toString))
         }
-      }
-      return tableBody.+:(tableHeader)
+      }.+:(tableHeader)
     }
-    return Seq.empty[Array[String]]
   }
 }

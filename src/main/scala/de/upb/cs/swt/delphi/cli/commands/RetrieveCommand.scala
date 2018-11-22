@@ -74,8 +74,10 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
             success(config)(s"Found ${unmarshalled.size} item(s).")
             reportResult(config)(unmarshalled)
 
-            if(!config.csv.equals(""))
+            if(!config.csv.equals("")) {
               exportResult(config)(unmarshalled)
+              information(config)("Results written to file '" + config.csv + "'")
+            }
 
             Success(unmarshalled)
           }

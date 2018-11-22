@@ -32,7 +32,6 @@ object DelphiCLI extends App {
 
   implicit val system = ActorSystem()
 
-
   val cliParser = {
     new scopt.OptionParser[Config]("delphi-cli") {
       head("Delphi Command Line Tool", s"(${BuildInfo.version})")
@@ -55,7 +54,8 @@ object DelphiCLI extends App {
         .children(
           arg[String]("id").action((x, c) => c.copy(id = x)).text("The ID of the project to retrieve"),
           opt[Unit]('f', "file").action((_, c) => c.copy(opts = List("file"))).text("Use to load the ID from file, " +
-            "with the filepath given in place of the ID"), opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)")
+            "with the filepath given in place of the ID"),
+          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)")
         )
 
       cmd("search").action((s, c) => c.copy(mode = "search"))
