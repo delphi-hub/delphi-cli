@@ -33,7 +33,7 @@ case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://d
                   query : String = "",
                   limit : Option[Int] = None,
                   id : String = "",
-                  timeout : Int = 10,
+                  timeout : Option[Int] = None,
                   args: List[String] = List(),
                   opts: List[String] = List()) {
 

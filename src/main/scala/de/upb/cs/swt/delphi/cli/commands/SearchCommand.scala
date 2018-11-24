@@ -16,8 +16,7 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-import java.util.concurrent.TimeoutException
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -33,10 +32,13 @@ import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success, Try}
 
 object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
+
+  final var SEARCH_TIMEOUT: Int = 10
+
   /**
     * Executes the command implementation
     *
@@ -59,47 +61,52 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
       Http().singleRequest(HttpRequest(uri = searchUri, method = HttpMethods.POST, entity = entity))
     }
 
-    try {
-      val response = Await.result(responseFuture, Duration(config.timeout + " seconds"))
-      val resultFuture: Future[String] = response match {
-        case HttpResponse(StatusCodes.OK, headers, entity, _) =>
-          entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
-            body.utf8String
-          }
-        case resp@HttpResponse(code, _, _, _) => {
-          error(config)("Request failed, response code: " + code)
-          resp.discardEntityBytes()
-          Future("")
+    Try(Await.result(responseFuture, Duration(config.timeout.getOrElse(SEARCH_TIMEOUT) + " seconds"))).
+      map(response => parseResponse(response, config, start)(ec, materializer)).
+      recover {
+        case e : TimeoutException => {
+          error(config)("The query timed out after " + (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS) +
+            " seconds. To set a longer timeout, use the --timeout option.")
+          Failure(e)
         }
       }
+  }
 
-      val result = Await.result(resultFuture, Duration.Inf)
+  private def parseResponse(response: HttpResponse, config: Config, start: Long)
+                           (implicit ec: ExecutionContextExecutor, materializer: ActorMaterializer): Unit = {
 
-      val took = (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS)
-
-      if (config.raw || result.equals("")) {
-        reportResult(config)(result)
-      }
-
-      if(!(config.raw || result.equals("")) || !config.csv.equals("")) {
-        val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
-
-        val processFuture = unmarshalledFuture.transform {
-          case Success(unmarshalled) => {
-            processResults(config, unmarshalled, took)
-            Success(unmarshalled)
-          }
-          case Failure(e) => {
-            error(config)(result)
-            Failure(e)
-          }
+    val resultFuture: Future[String] = response match {
+      case HttpResponse(StatusCodes.OK, headers, entity, _) =>
+        entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
+          body.utf8String
         }
+      case resp@HttpResponse(code, _, _, _) => {
+        error(config)("Request failed, response code: " + code)
+        resp.discardEntityBytes()
+        Future("")
       }
-    } catch {
-      case e : TimeoutException => {
-        error(config)("The query timed out after " + (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS) +
-          " seconds. To set a longer timeout, use the --timeout option.")
-        Failure(e)
+    }
+
+    val result = Await.result(resultFuture, Duration.Inf)
+
+    val took = (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS)
+
+    if (config.raw || result.equals("")) {
+      reportResult(config)(result)
+    }
+
+    if(!(config.raw || result.equals("")) || !config.csv.equals("")) {
+      val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
+
+      val processFuture = unmarshalledFuture.transform {
+        case Success(unmarshalled) => {
+          processResults(config, unmarshalled, took)
+          Success(unmarshalled)
+        }
+        case Failure(e) => {
+          error(config)(result)
+          Failure(e)
+        }
       }
     }
   }

@@ -18,7 +18,6 @@ package de.upb.cs.swt.delphi.cli
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
 import de.upb.cs.swt.delphi.cli.commands.{RetrieveCommand, SearchCommand, TestCommand}
 
 import scala.concurrent.duration.Duration
@@ -65,7 +64,7 @@ object DelphiCLI extends App {
           opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
           opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned."),
           opt[Unit](name="list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)"),
-          opt[Int]("timeout").action((x, c) => c.copy(timeout = x)).text("Timeout in seconds.")
+          opt[Int]("timeout").action((x, c) => c.copy(timeout = Some(x))).text("Timeout in seconds.")
         )
     }
   }
