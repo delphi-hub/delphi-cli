@@ -16,6 +16,7 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
@@ -29,7 +30,6 @@ import akka.util.ByteString
 import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import de.upb.cs.swt.delphi.cli.commands.RetrieveCommand.information
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
@@ -59,39 +59,47 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
       Http().singleRequest(HttpRequest(uri = searchUri, method = HttpMethods.POST, entity = entity))
     }
 
-    val response = Await.result(responseFuture, 10 seconds)
-    val resultFuture: Future[String] = response match {
-      case HttpResponse(StatusCodes.OK, headers, entity, _) =>
-        entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
-          body.utf8String
+    try {
+      val response = Await.result(responseFuture, Duration(config.timeout + " seconds"))
+      val resultFuture: Future[String] = response match {
+        case HttpResponse(StatusCodes.OK, headers, entity, _) =>
+          entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
+            body.utf8String
+          }
+        case resp@HttpResponse(code, _, _, _) => {
+          error(config)("Request failed, response code: " + code)
+          resp.discardEntityBytes()
+          Future("")
         }
-      case resp@HttpResponse(code, _, _, _) => {
-        error(config)("Request failed, response code: " + code)
-        resp.discardEntityBytes()
-        Future("")
       }
-    }
 
-    val result = Await.result(resultFuture, Duration.Inf)
+      val result = Await.result(resultFuture, Duration.Inf)
 
-    val took = (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS)
+      val took = (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS)
 
-    if (config.raw || result.equals("")) {
-      reportResult(config)(result)
-    }
+      if (config.raw || result.equals("")) {
+        reportResult(config)(result)
+      }
 
-    if(!(config.raw || result.equals("")) || !config.csv.equals("")) {
-      val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
+      if(!(config.raw || result.equals("")) || !config.csv.equals("")) {
+        val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
 
-      val processFuture = unmarshalledFuture.transform {
-        case Success(unmarshalled) => {
-          processResults(config, unmarshalled, took)
-          Success(unmarshalled)
+        val processFuture = unmarshalledFuture.transform {
+          case Success(unmarshalled) => {
+            processResults(config, unmarshalled, took)
+            Success(unmarshalled)
+          }
+          case Failure(e) => {
+            error(config)(result)
+            Failure(e)
+          }
         }
-        case Failure(e) => {
-          error(config)(result)
-          Failure(e)
-        }
+      }
+    } catch {
+      case e : TimeoutException => {
+        error(config)("The query timed out after " + (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS) +
+          " seconds. To set a longer timeout, use the --timeout option.")
+        Failure(e)
       }
     }
   }
