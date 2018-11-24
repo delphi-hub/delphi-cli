@@ -37,7 +37,7 @@ import scala.util.{Failure, Success, Try}
 
 object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
 
-  final var SEARCH_TIMEOUT: Int = 10
+  val searchTimeout: Int = 10
 
   /**
     * Executes the command implementation
@@ -61,7 +61,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
       Http().singleRequest(HttpRequest(uri = searchUri, method = HttpMethods.POST, entity = entity))
     }
 
-    Try(Await.result(responseFuture, Duration(config.timeout.getOrElse(SEARCH_TIMEOUT) + " seconds"))).
+    Try(Await.result(responseFuture, Duration(config.timeout.getOrElse(searchTimeout) + " seconds"))).
       map(response => parseResponse(response, config, start)(ec, materializer)).
       recover {
         case e : TimeoutException => {
