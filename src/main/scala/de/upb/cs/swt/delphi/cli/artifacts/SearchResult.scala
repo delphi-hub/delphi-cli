@@ -18,21 +18,23 @@ package de.upb.cs.swt.delphi.cli.artifacts
 
 import spray.json.DefaultJsonProtocol
 
-case class RetrieveResult(val id: String,
-                          val metadata: ArtifactMetadata,
-                          val metricResults: Map[String, Int]) {
+trait Result{
+  val id: String
+  val metadata: ArtifactMetadata
+  val metricResults: Map[String, Int]
+
   def toMavenIdentifier() : String = s"${metadata.groupId}:${metadata.artifactId}:${metadata.version}"
 
   def fieldNames() : List[String] = metricResults.keys.toList.sorted
 }
 
-case class SearchResult(val id: String,
-                        val metadata: ArtifactMetadata,
-                        val metricResults: Map[String, Int]) {
-  def toMavenIdentifier() : String = s"${metadata.groupId}:${metadata.artifactId}:${metadata.version}"
+case class SearchResult(id: String,
+                        metadata: ArtifactMetadata,
+                        metricResults: Map[String, Int]) extends Result
 
-  def fieldNames() : List[String] = metricResults.keys.toList.sorted
-}
+case class RetrieveResult(id: String,
+                          metadata: ArtifactMetadata,
+                          metricResults: Map[String, Int]) extends Result
 
 case class ArtifactMetadata(val artifactId: String,
                             val source: String,

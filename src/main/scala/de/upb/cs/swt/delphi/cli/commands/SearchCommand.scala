@@ -29,6 +29,7 @@ import akka.util.ByteString
 import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
+import de.upb.cs.swt.delphi.cli.commands.RetrieveCommand.information
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
@@ -77,7 +78,9 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
 
     if (config.raw || result.equals("")) {
       reportResult(config)(result)
-    } else {
+    }
+
+    if(!(config.raw || result.equals("")) || !config.csv.equals("")) {
       val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
 
       val processFuture = unmarshalledFuture.transform {
@@ -108,6 +111,11 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     reportResult(config)(results)
 
     information(config)(f"Query took $queryRuntime%.2fs.")
+
+    if(!config.csv.equals("")) {
+      exportResult(config)(results)
+      information(config)("Results written to file '" + config.csv + "'")
+    }
   }
 
   case class Query(query: String,

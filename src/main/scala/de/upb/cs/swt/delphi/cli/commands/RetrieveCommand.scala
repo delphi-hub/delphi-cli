@@ -23,6 +23,7 @@ import akka.stream.ActorMaterializer
 import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.RetrieveResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
+import de.upb.cs.swt.delphi.cli.commands.SearchCommand.information
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.Await
@@ -62,7 +63,9 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
     result.map(s => {
       if (config.raw) {
         reportResult(config)(s)
-      } else {
+      }
+
+      if (!config.raw || !config.csv.equals("")) {
         val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
 
         unmarshalledFuture.transform {
@@ -70,6 +73,11 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
             val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
             success(config)(s"Found ${unmarshalled.size} item(s).")
             reportResult(config)(unmarshalled)
+
+            if(!config.csv.equals("")) {
+              exportResult(config)(unmarshalled)
+              information(config)("Results written to file '" + config.csv + "'")
+            }
 
             Success(unmarshalled)
           }

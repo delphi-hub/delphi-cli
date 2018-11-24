@@ -26,6 +26,7 @@ package de.upb.cs.swt.delphi.cli
 case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"),
                   verbose: Boolean = false,
                   raw: Boolean = false,
+                  csv: String = "",
                   silent: Boolean = false,
                   list : Boolean = false,
                   mode: String = "",
@@ -36,5 +37,6 @@ case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://d
                   opts: List[String] = List()) {
 
   lazy val consoleOutput = new ConsoleOutput(this)
+  lazy val csvOutput = new CsvOutput(this)
 
 }
