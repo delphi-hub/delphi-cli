@@ -18,7 +18,6 @@ package de.upb.cs.swt.delphi.cli
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.stream.ActorMaterializer
 import de.upb.cs.swt.delphi.cli.commands.{RetrieveCommand, SearchCommand, TestCommand}
 
 import scala.concurrent.duration.Duration
@@ -53,18 +52,19 @@ object DelphiCLI extends App {
         .text("Retrieve a project's description, specified by ID.")
         .children(
           arg[String]("id").action((x, c) => c.copy(id = x)).text("The ID of the project to retrieve"),
+          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
           opt[Unit]('f', "file").action((_, c) => c.copy(opts = List("file"))).text("Use to load the ID from file, " +
-            "with the filepath given in place of the ID"),
-          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)")
+            "with the filepath given in place of the ID")
         )
 
       cmd("search").action((s, c) => c.copy(mode = "search"))
         .text("Search artifact using a query.")
         .children(
           arg[String]("query").action((x,c) => c.copy(query = x)).text("The query to be used."),
+          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
           opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned."),
           opt[Unit](name="list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)"),
-          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)")
+          opt[Int]("timeout").action((x, c) => c.copy(timeout = Some(x))).text("Timeout in seconds.")
         )
     }
   }

@@ -16,7 +16,7 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{TimeUnit, TimeoutException}
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -29,14 +29,16 @@ import akka.util.ByteString
 import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import de.upb.cs.swt.delphi.cli.commands.RetrieveCommand.information
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success, Try}
 
 object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
+
+  val searchTimeout: Int = 10
+
   /**
     * Executes the command implementation
     *
@@ -59,7 +61,20 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
       Http().singleRequest(HttpRequest(uri = searchUri, method = HttpMethods.POST, entity = entity))
     }
 
-    val response = Await.result(responseFuture, 10 seconds)
+    Try(Await.result(responseFuture, Duration(config.timeout.getOrElse(searchTimeout) + " seconds"))).
+      map(response => parseResponse(response, config, start)(ec, materializer)).
+      recover {
+        case e : TimeoutException => {
+          error(config)("The query timed out after " + (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS) +
+            " seconds. To set a longer timeout, use the --timeout option.")
+          Failure(e)
+        }
+      }
+  }
+
+  private def parseResponse(response: HttpResponse, config: Config, start: Long)
+                           (implicit ec: ExecutionContextExecutor, materializer: ActorMaterializer): Unit = {
+
     val resultFuture: Future[String] = response match {
       case HttpResponse(StatusCodes.OK, headers, entity, _) =>
         entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
