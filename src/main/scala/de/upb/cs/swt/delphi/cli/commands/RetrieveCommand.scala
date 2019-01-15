@@ -38,7 +38,7 @@ import scala.util.{Failure, Success}
 object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
 
 
-  override def execute(config: Config)(implicit system: ActorSystem): Unit = {
+   def execute(config: Config)(implicit system: ActorSystem): Unit = {
     implicit val ec = system.dispatcher
     implicit val materializer = ActorMaterializer()
 

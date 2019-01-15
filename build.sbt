@@ -29,6 +29,11 @@ libraryDependencies += "com.lihaoyi" %% "fansi" % "0.2.5"
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
 
+
+libraryDependencies += "com.softwaremill.sttp" %% "core" % "1.5.4"
+
+
+
 debianPackageDependencies := Seq("java8-runtime-headless")
 
 lazy val cli = (project in file(".")).
@@ -38,11 +43,23 @@ lazy val cli = (project in file(".")).
   enablePlugins(BuildInfoPlugin).
   enablePlugins(DebianPlugin).
   enablePlugins(WindowsPlugin).
-
+  enablePlugins(GraalVMNativeImagePlugin).
+  settings(
+    graalVMNativeImageOptions++=Seq(
+      "--enable-https",
+      "--enable-http",
+      "--enable-all-security-services",
+      "--allow-incomplete-classpath",
+      "--enable-url-protocols=http,https"
+    )
+  ).
+  enablePlugins(JDKPackagerPlugin).
   settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "de.upb.cs.swt.delphi.cli"
+    buildInfoPackage := "de.upb.cs.swt.delphi.cli",
   )
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
 trapExit := false
+fork := true
+connectInput := true

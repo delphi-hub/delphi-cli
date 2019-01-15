@@ -44,7 +44,7 @@ object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProto
     *
     * @param config The current configuration for the command
     */
-  override def execute(config: Config)(implicit system: ActorSystem): Unit = {
+   def execute(config: Config)(implicit system: ActorSystem): Unit = {
     implicit val ec = system.dispatcher
     implicit val materializer = ActorMaterializer()
 

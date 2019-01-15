@@ -13,21 +13,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+package de.upb.cs.swt.delphi
 
-package de.upb.cs.swt.delphi.cli.commands
+import com.softwaremill.sttp.HttpURLConnectionBackend
 
-import de.upb.cs.swt.delphi.cli.Config
-import de.upb.cs.swt.delphi.cli._
+package object cli {
+  implicit val config: Config = Config()
+  implicit val backend = HttpURLConnectionBackend()
 
-/**
-  * The implementation of the test command.
-  * Tries to connect to the Delphi server and reports on the results of the version call.
-  */
-object TestCommand extends Command {
-  override def execute(implicit config: Config): Unit = executeGet1(
-    "version"
-  ).map(s => {
-    success(config)("Successfully contacted Delphi server. ")
-    information(config)("Server version: " + s)
-  })
+  val javaLibPath = Option(System.getenv("JAVA_LIB_PATH"))
+    .orElse(Some("/usr/lib/jvm/default-java/lib/"))
+
+  val trustStorePath = Option(System.getenv("JAVA_TRUSTSTORE"))
+    .orElse(Some("/usr/lib/jvm/default-java/lib/security/cacerts"))
+
 }

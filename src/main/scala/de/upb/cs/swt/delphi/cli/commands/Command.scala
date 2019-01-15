@@ -22,11 +22,12 @@ import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes, Uri}
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
+import com.softwaremill.sttp._
 import de.upb.cs.swt.delphi.cli.Config
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.concurrent.{Await, Future}
+import scala.util.Failure
 
 /**
   * Represents the implementation of a command of the CLI
@@ -35,17 +36,19 @@ trait Command {
 
   /**
     * Executes the command implementation
+    *
     * @param config The current configuration for the command
     */
-  def execute(config: Config)(implicit system : ActorSystem): Unit
+  def execute(implicit config: Config): Unit = {}
 
   /**
     * Implements a common request type using currying to avoid code duplication
+    *
     * @param target The endpoint to perform a Get request on
     * @param config The current configuration for the command
     */
-  protected def executeGet(target: String, parameters: Map[String, String] = Map())(config: Config, system : ActorSystem) : Option[String] = {
-    implicit val sys : ActorSystem = system
+  protected def executeGet(target: String, parameters: Map[String, String] = Map())(config: Config, system: ActorSystem): Option[String] = {
+    implicit val sys: ActorSystem = system
     implicit val materializer = ActorMaterializer()
     implicit val executionContext = sys.dispatcher
 
@@ -65,7 +68,7 @@ trait Command {
         entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
           Some(body.utf8String)
         }
-      case resp @ HttpResponse(code, _, _, _) => {
+      case resp@HttpResponse(code, _, _, _) => {
         error(config)("Artifact not found.")
         resp.discardEntityBytes()
         Future(None)
@@ -75,9 +78,35 @@ trait Command {
     Await.result(resultString, Duration.Inf)
   }
 
+  /**
+    * Generic http GET request
+    *
+    * @param target Sub url in delphi server
+    * @param parameters Query params
+    * @return GET response
+    */
+  protected def executeGet1(target: String, parameters: Map[String, String] = Map())
+                           (implicit config: Config, backend: SttpBackend[Id, Nothing]): Option[String] = {
+
+    val request = sttp.get(uri"${config.server}/$target?$parameters")
+    config.consoleOutput.outputInformation(s"Sending request ${request.uri}")
+    val response = request.send()
+    response.body match {
+      case Left(value) =>
+        error.apply(s"Request failed:\n $value")
+        None
+      case Right(value) =>
+        Some(value)
+    }
+  }
+
+
   protected def information(implicit config: Config): String => Unit = config.consoleOutput.outputInformation _
+
   protected def reportResult(implicit config: Config): Any => Unit = config.consoleOutput.outputResult _
+
   protected def error(implicit config: Config): String => Unit = config.consoleOutput.outputError _
+
   protected def success(implicit config: Config): String => Unit = config.consoleOutput.outputSuccess _
 
   protected def exportResult(implicit config: Config): Any => Unit = config.csvOutput.exportResult _
