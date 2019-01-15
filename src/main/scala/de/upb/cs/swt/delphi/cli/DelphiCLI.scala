@@ -16,12 +16,46 @@
 
 package de.upb.cs.swt.delphi.cli
 
-import de.upb.cs.swt.delphi.cli.commands.TestCommand
+import com.softwaremill.sttp.{HttpURLConnectionBackend, Id, SttpBackend}
+import de.upb.cs.swt.delphi.cli.commands._
 
 /**
   * The application class for the Delphi command line interface
   */
 object DelphiCLI {
+
+
+  def main(args: Array[String]): Unit = {
+
+    def getEnvOrElse(envVar: String, defaultPath: String) = sys.env.getOrElse(envVar, defaultPath)
+
+    val javaLibPath = getEnvOrElse("JAVA_LIB_PATH", "/usr/lib/jvm/default-java/lib/")
+
+    val trustStorePath = getEnvOrElse("JAVA_TRUSTSTORE", "/usr/lib/jvm/default-java/lib/security/cacerts")
+
+    System.setProperty("java.library.path", javaLibPath)
+    System.setProperty("javax.net.ssl.trustStore", trustStorePath)
+
+    cliParser.parse(args, Config()) match {
+      case Some(c) =>
+
+        implicit val config: Config = c
+        implicit val backend: SttpBackend[Id, Nothing] = HttpURLConnectionBackend()
+
+        if (!config.silent) cliParser.showHeader()
+
+        config.mode match {
+          case "test" => TestCommand.execute
+          case "retrieve" => RetrieveCommand.execute
+          //        case "search" => SearchCommand.execute(config)
+          case x => config.consoleOutput.outputError(s"Unknown command: $x")
+        }
+
+
+      case None =>
+    }
+
+  }
 
   private def cliParser = {
     val parser = {
@@ -63,24 +97,5 @@ object DelphiCLI {
       }
     }
     parser
-  }
-
-  def main(args: Array[String]): Unit = {
-
-    System.setProperty("java.library.path", javaLibPath.get)
-    System.setProperty("javax.net.ssl.trustStore", trustStorePath.get)
-    System.setProperty("picocli.ansi", "true")
-    cliParser.parse(args, config) match {
-      case Some(config) =>
-        if (!config.silent) cliParser.showHeader()
-        config.mode match {
-          case "test" => TestCommand.execute
-          //          case "retrieve" => RetrieveCommand.execute(config)
-          //        case "search" => SearchCommand.execute(config)
-          case x => config.consoleOutput.outputError(s"Unknown command: $x")
-        }
-      case None =>
-    }
-
   }
 }

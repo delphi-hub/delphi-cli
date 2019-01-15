@@ -16,31 +16,21 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
-import de.upb.cs.swt.delphi.cli.Config
+import com.softwaremill.sttp.{Id, SttpBackend}
+import de.upb.cs.swt.delphi.cli._
 import de.upb.cs.swt.delphi.cli.artifacts.RetrieveResult
-import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import de.upb.cs.swt.delphi.cli.commands.SearchCommand.information
-import spray.json.DefaultJsonProtocol
+import spray.json._
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.io.Source
-import scala.util.{Failure, Success}
 
 /**
   * The implementation of the retrieve command.
   * Retrieves the contents of the file at the endpoint specified by the config file, and prints them to stdout
   */
-object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
+object RetrieveCommand extends Command with DefaultJsonProtocol {
 
 
-   def execute(config: Config)(implicit system: ActorSystem): Unit = {
-    implicit val ec = system.dispatcher
-    implicit val materializer = ActorMaterializer()
+  override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
 
     //Checks whether the ID should be loaded from a file or not, and either returns the first line
     //  of the given file if it is, or the specified ID otherwise
@@ -56,37 +46,54 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
     }
 
     val result = executeGet(
-      s"/retrieve/$checkTarget",
+      s"retrieve/$checkTarget",
       Map("pretty" -> "")
-    )(config, system)
+    )
 
-    result.map(s => {
+    result.foreach(s => {
       if (config.raw) {
-        reportResult(config)(s)
+        reportResult.apply(s)
       }
-
       if (!config.raw || !config.csv.equals("")) {
-        val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
+        import artifacts.SearchResultJson._
 
-        unmarshalledFuture.transform {
-          case Success(unmarshalled) => {
-            val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-            success(config)(s"Found ${unmarshalled.size} item(s).")
-            reportResult(config)(unmarshalled)
+        //TODO:  convertTo[List[RetrieveResult]] not working ???
 
-            if(!config.csv.equals("")) {
-              exportResult(config)(unmarshalled)
-              information(config)("Results written to file '" + config.csv + "'")
-            }
+        val jsonArr = s.parseJson.asInstanceOf[JsArray].elements
+        val retrieveResults = jsonArr.map(r => r.convertTo[RetrieveResult])
 
-            Success(unmarshalled)
-          }
-          case Failure(e) => {
-            error(config)(s)
-            Failure(e)
-          }
+        success.apply(s"Found ${retrieveResults.size} item(s).")
+        reportResult.apply(retrieveResults)
+        if (!config.csv.equals("")) {
+          exportResult.apply(retrieveResults)
+          information.apply("Results written to file '" + config.csv + "'")
         }
       }
+
+
     })
   }
 }
+
+/* if (!config.raw || !config.csv.equals("")) {
+      val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
+
+      unmarshalledFuture.transform {
+        case Success(unmarshalled) => {
+          val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
+          success.apply(s"Found ${unmarshalled.size} item(s).")
+          reportResult.apply(unmarshalled)
+
+          if (!config.csv.equals("")) {
+            exportResult.apply(unmarshalled)
+            information.apply("Results written to file '" + config.csv + "'")
+          }
+
+          Success(unmarshalled)
+        }
+        case Failure(e) => {
+          error.apply(s)
+          Failure(e)
+        }
+      }
+    }*/

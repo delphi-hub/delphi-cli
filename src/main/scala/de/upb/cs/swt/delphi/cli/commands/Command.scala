@@ -16,18 +16,8 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes, Uri}
-import akka.stream.ActorMaterializer
-import akka.util.ByteString
 import com.softwaremill.sttp._
 import de.upb.cs.swt.delphi.cli.Config
-
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.Failure
 
 /**
   * Represents the implementation of a command of the CLI
@@ -39,54 +29,18 @@ trait Command {
     *
     * @param config The current configuration for the command
     */
-  def execute(implicit config: Config): Unit = {}
+  def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {}
 
-  /**
-    * Implements a common request type using currying to avoid code duplication
-    *
-    * @param target The endpoint to perform a Get request on
-    * @param config The current configuration for the command
-    */
-  protected def executeGet(target: String, parameters: Map[String, String] = Map())(config: Config, system: ActorSystem): Option[String] = {
-    implicit val sys: ActorSystem = system
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = sys.dispatcher
-
-    val uri = Uri(config.server)
-    config.consoleOutput.outputInformation(s"Contacting server ${uri}...")
-
-    val responseFuture = Http().singleRequest(HttpRequest(uri = uri.withPath(uri.path + target).withQuery(Query(parameters))))
-
-    responseFuture.onComplete {
-      case Failure(_) => error(config)(s"Could not reach server ${config.server}.")
-      case _ =>
-    }
-
-    val result = Await.result(responseFuture, 30 seconds)
-    val resultString = result match {
-      case HttpResponse(StatusCodes.OK, headers, entity, _) =>
-        entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
-          Some(body.utf8String)
-        }
-      case resp@HttpResponse(code, _, _, _) => {
-        error(config)("Artifact not found.")
-        resp.discardEntityBytes()
-        Future(None)
-      }
-    }
-
-    Await.result(resultString, Duration.Inf)
-  }
 
   /**
     * Generic http GET request
     *
-    * @param target Sub url in delphi server
+    * @param target     Sub url in delphi server
     * @param parameters Query params
     * @return GET response
     */
-  protected def executeGet1(target: String, parameters: Map[String, String] = Map())
-                           (implicit config: Config, backend: SttpBackend[Id, Nothing]): Option[String] = {
+  protected def executeGet(target: String, parameters: Map[String, String] = Map())
+                          (implicit config: Config, backend: SttpBackend[Id, Nothing]): Option[String] = {
 
     val request = sttp.get(uri"${config.server}/$target?$parameters")
     config.consoleOutput.outputInformation(s"Sending request ${request.uri}")
