@@ -33,16 +33,18 @@ trait Command {
 
 
   /**
-    * Generic http GET request
+    * Http GET request template
     *
     * @param target     Sub url in delphi server
     * @param parameters Query params
     * @return GET response
     */
-  protected def executeGet(target: String, parameters: Map[String, String] = Map())
+  protected def executeGet(paths: Seq[String], parameters: Map[String, String] = Map())
                           (implicit config: Config, backend: SttpBackend[Id, Nothing]): Option[String] = {
-
-    val request = sttp.get(uri"${config.server}/$target?$parameters")
+    val serverUrl = uri"${config.server}"
+    val oldPath = serverUrl.path
+    val reqUrl = serverUrl.path(oldPath ++ paths).params(parameters)
+    val request = sttp.get(reqUrl)
     config.consoleOutput.outputInformation(s"Sending request ${request.uri}")
     val response = request.send()
     response.body match {

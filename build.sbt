@@ -1,6 +1,6 @@
 scalaVersion := "2.12.4"
 
-name := "delphi"
+name := "delphi-cli"
 version := "1.0.0-SNAPSHOT"
 maintainer := "Ben Hermann <ben.hermann@upb.de>"
 
@@ -28,10 +28,12 @@ libraryDependencies += "de.vandermeer" % "asciitable" % "0.3.2"
 libraryDependencies += "com.lihaoyi" %% "fansi" % "0.2.5"
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 
-
-libraryDependencies += "com.softwaremill.sttp" %% "core" % "1.5.4"
-
+libraryDependencies ++= Seq(
+  "com.softwaremill.sttp" %% "core" % "1.5.4",
+  "com.softwaremill.sttp" %% "spray-json" % "1.5.4"
+)
 
 
 debianPackageDependencies := Seq("java8-runtime-headless")
@@ -45,7 +47,7 @@ lazy val cli = (project in file(".")).
   enablePlugins(WindowsPlugin).
   enablePlugins(GraalVMNativeImagePlugin).
   settings(
-    graalVMNativeImageOptions++=Seq(
+    graalVMNativeImageOptions ++= Seq(
       "--enable-https",
       "--enable-http",
       "--enable-all-security-services",

@@ -45,8 +45,9 @@ object RetrieveCommand extends Command with DefaultJsonProtocol {
       }
     }
 
+    println(config.id)
     val result = executeGet(
-      s"retrieve/$checkTarget",
+      Seq("retrieve", checkTarget),
       Map("pretty" -> "")
     )
 
@@ -57,7 +58,8 @@ object RetrieveCommand extends Command with DefaultJsonProtocol {
       if (!config.raw || !config.csv.equals("")) {
         import artifacts.SearchResultJson._
 
-        //TODO:  convertTo[List[RetrieveResult]] not working ???
+        //TODO: Direct convertTo[List[RetrieveResult]] not working ???
+
 
         val jsonArr = s.parseJson.asInstanceOf[JsArray].elements
         val retrieveResults = jsonArr.map(r => r.convertTo[RetrieveResult])
@@ -69,31 +71,6 @@ object RetrieveCommand extends Command with DefaultJsonProtocol {
           information.apply("Results written to file '" + config.csv + "'")
         }
       }
-
-
     })
   }
 }
-
-/* if (!config.raw || !config.csv.equals("")) {
-      val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
-
-      unmarshalledFuture.transform {
-        case Success(unmarshalled) => {
-          val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-          success.apply(s"Found ${unmarshalled.size} item(s).")
-          reportResult.apply(unmarshalled)
-
-          if (!config.csv.equals("")) {
-            exportResult.apply(unmarshalled)
-            information.apply("Results written to file '" + config.csv + "'")
-          }
-
-          Success(unmarshalled)
-        }
-        case Failure(e) => {
-          error.apply(s)
-          Failure(e)
-        }
-      }
-    }*/

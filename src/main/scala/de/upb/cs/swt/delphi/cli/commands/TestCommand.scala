@@ -24,8 +24,8 @@ import de.upb.cs.swt.delphi.cli.Config
   * Tries to connect to the Delphi server and reports on the results of the version call.
   */
 object TestCommand extends Command {
-  override def execute(implicit config: Config,backend: SttpBackend[Id, Nothing]): Unit = {
-    executeGet("version")
+  override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
+    executeGet(Seq("version"))
       .foreach(s => {
         success.apply("Successfully contacted Delphi server. ")
         information.apply("Server version: " + s)
