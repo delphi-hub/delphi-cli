@@ -49,7 +49,7 @@ object DelphiCLI {
         config.mode match {
           case "test" => TestCommand.execute
           case "retrieve" => RetrieveCommand.execute
-          //        case "search" => SearchCommand.execute(config)
+          case "search" => SearchCommand.execute
           case x => config.consoleOutput.outputError(s"Unknown command: $x")
         }
 

@@ -27,7 +27,7 @@ import scala.io.Source
   * The implementation of the retrieve command.
   * Retrieves the contents of the file at the endpoint specified by the config file, and prints them to stdout
   */
-object RetrieveCommand extends Command with DefaultJsonProtocol {
+object RetrieveCommand extends Command {
 
 
   override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
@@ -45,7 +45,6 @@ object RetrieveCommand extends Command with DefaultJsonProtocol {
       }
     }
 
-    println(config.id)
     val result = executeGet(
       Seq("retrieve", checkTarget),
       Map("pretty" -> "")
