@@ -16,6 +16,7 @@
 
 package de.upb.cs.swt.delphi.cli
 
+import com.softwaremill.sttp._
 import de.upb.cs.swt.delphi.cli.commands._
 
 /**
@@ -38,8 +39,6 @@ object DelphiCLI {
     cliParser.parse(args, Config()) match {
       case Some(c) =>
 
-        import com.softwaremill.sttp._
-        import scala.concurrent.duration._
 
         implicit val config: Config = c
         implicit val backend: SttpBackend[Id, Nothing] = HttpURLConnectionBackend()

@@ -19,6 +19,7 @@ package de.upb.cs.swt.delphi.cli.commands
 import com.softwaremill.sttp.{Id, SttpBackend}
 import de.upb.cs.swt.delphi.cli._
 import de.upb.cs.swt.delphi.cli.artifacts.RetrieveResult
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
 import spray.json._
 
 import scala.io.Source
@@ -55,7 +56,6 @@ object RetrieveCommand extends Command {
         reportResult.apply(s)
       }
       if (!config.raw || !config.csv.equals("")) {
-        import artifacts.SearchResultJson._
 
         //TODO: Direct convertTo[List[RetrieveResult]] not working ???
 

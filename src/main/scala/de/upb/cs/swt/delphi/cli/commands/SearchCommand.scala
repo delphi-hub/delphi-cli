@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Delphi Team.
+  // Copyright (C) 2018 The Delphi Team.
 // See the LICENCE file distributed with this work for additional
 // information regarding copyright ownership.
 //
@@ -20,8 +20,9 @@ import java.util.concurrent.TimeUnit
 
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.sprayJson._
+import de.upb.cs.swt.delphi.cli.Config
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
-import de.upb.cs.swt.delphi.cli.{Config, artifacts}
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
 import spray.json._
 
 import scala.concurrent.duration._
@@ -29,7 +30,7 @@ import scala.concurrent.duration._
 object SearchCommand extends Command with DefaultJsonProtocol{
 
   val searchTimeout = 10.seconds
-  val TIMEOUT_CODE = 408
+  val timeoutCode = 408
 
   /**
     * Executes the command implementation
@@ -61,7 +62,7 @@ object SearchCommand extends Command with DefaultJsonProtocol{
     val end = System.nanoTime()
     val took = (end - start).nanos
 
-    if (res.code == TIMEOUT_CODE) {
+    if (res.code == timeoutCode) {
 
       error.apply(s"The query timed out after   ${took.toSeconds} seconds. " +
         "To set a longer timeout, use the --timeout option.")
@@ -69,7 +70,6 @@ object SearchCommand extends Command with DefaultJsonProtocol{
     val resStr = res.body match {
       case Left(v) =>
         error.apply(s"Search request failed \n $v")
-        println(v)
         None
       case Right(v) =>
         Some(v)
@@ -83,7 +83,6 @@ object SearchCommand extends Command with DefaultJsonProtocol{
       reportResult.apply(res)
     }
     if (!(config.raw || res.equals("")) || !config.csv.equals("")) {
-      import artifacts.SearchResultJson._
       val jsonArr = res.parseJson.asInstanceOf[JsArray].elements
       val retrieveResults = jsonArr.map(r => r.convertTo[SearchResult]).toList
       onProperSearchResults(retrieveResults)
