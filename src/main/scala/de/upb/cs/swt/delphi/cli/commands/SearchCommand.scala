@@ -1,4 +1,4 @@
-  // Copyright (C) 2018 The Delphi Team.
+// Copyright (C) 2018 The Delphi Team.
 // See the LICENCE file distributed with this work for additional
 // information regarding copyright ownership.
 //
