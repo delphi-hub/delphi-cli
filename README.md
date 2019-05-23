@@ -21,6 +21,18 @@ It can be used in an automated context to automatically construct fitting item s
 The Delphi CLI checks the provided query and passes it on to the web API of the configured platform.
 The results are printed to the console by default.
 
+## How do I run Delphi CLI?
+
+```
+$ git clone https://github.com/delphi-hub/delphi-cli.git
+$ cd delphi-cli/
+$ sbt stage
+$ cd target/universal/stage/bin
+$ ./delphi [command] [options]
+```
+
+For the different commands and options, see [How can I use it?](#how-can-i-use-it)
+
 ## How can I use it?
 
 The Delphi CLI is running on the Java Virtual Machine.
@@ -29,9 +41,9 @@ We require a Java Runtime Environment (JRE) in version 8 or newer.
 Our software is available as a binary release on [GitHub](https://github.com/delphi-hub/delphi-cli/releases).
 
 ```
-$ delphi-cli --help
+$ delphi --help
 Delphi Command Line Tool (1.0.0-SNAPSHOT)
-Usage: delphi-cli [test|retrieve|search] [options] <args>...
+Usage: delphi [test|retrieve|search] [options] <args>...
 
   --version                Prints the version of the command line tool.
   --help                   Prints this help text.
