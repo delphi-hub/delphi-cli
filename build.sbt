@@ -13,7 +13,7 @@ wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
-val akkaVersion = "2.5.14"
+val akkaVersion = "2.5.16"
 val akkaHttpVersion = "10.1.5"
 
 libraryDependencies ++= Seq(

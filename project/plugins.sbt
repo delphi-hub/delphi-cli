@@ -4,7 +4,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.15")
 
 // coverage
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.5.1")
-addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "1.3.12")
+addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "1.3.14")
 
 // preparation for dependency checking
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.1")
