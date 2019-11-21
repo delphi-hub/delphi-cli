@@ -39,17 +39,6 @@ wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
-/*
-val akkaVersion = "2.5.14"
-
-val akkaHttpVersion = "10.1.5"
-
-libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion,
-  "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
-  "com.typesafe.akka" %% "akka-stream" % akkaVersion
-)
- */
 val http4sVersion = "0.18.21"
 
 // Only necessary for SNAPSHOT releases
@@ -67,6 +56,13 @@ libraryDependencies += "de.vandermeer" % "asciitable" % "0.3.2"
 libraryDependencies += "com.lihaoyi" %% "fansi" % "0.2.5"
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % "test"
+
+libraryDependencies ++= Seq(
+  "com.softwaremill.sttp" %% "core" % "1.5.4",
+  "com.softwaremill.sttp" %% "spray-json" % "1.5.4"
+)
+
 
 debianPackageDependencies := Seq("java8-runtime-headless")
 
@@ -77,7 +73,17 @@ lazy val cli = (project in file(".")).
   enablePlugins(BuildInfoPlugin).
   enablePlugins(DebianPlugin).
   enablePlugins(WindowsPlugin).
-
+  enablePlugins(GraalVMNativeImagePlugin).
+  settings(
+    graalVMNativeImageOptions ++= Seq(
+      "--enable-https",
+      "--enable-http",
+      "--enable-all-security-services",
+      "--allow-incomplete-classpath",
+      "--enable-url-protocols=http,https"
+    )
+  ).
+  enablePlugins(JDKPackagerPlugin).
   settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage := "de.upb.cs.swt.delphi.cli",
@@ -86,3 +92,5 @@ lazy val cli = (project in file(".")).
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
 trapExit := false
+fork := true
+connectInput := true

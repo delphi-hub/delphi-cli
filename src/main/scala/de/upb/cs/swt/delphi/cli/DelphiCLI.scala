@@ -16,81 +16,87 @@
 
 package de.upb.cs.swt.delphi.cli
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import de.upb.cs.swt.delphi.cli.commands.{RetrieveCommand, SearchCommand, TestCommand}
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext}
-
+import com.softwaremill.sttp._
+import de.upb.cs.swt.delphi.cli.commands._
 
 /**
   * The application class for the Delphi command line interface
   */
-object DelphiCLI extends App {
+object DelphiCLI {
 
-  implicit val system = ActorSystem()
 
-  val cliParser = {
-    new scopt.OptionParser[Config]("delphi-cli") {
-      head("Delphi Command Line Tool", s"(${BuildInfo.version})")
+  def main(args: Array[String]): Unit = {
 
-      version("version").text("Prints the version of the command line tool.")
+    def getEnvOrElse(envVar: String, defaultPath: String) = sys.env.getOrElse(envVar, defaultPath)
 
-      help("help").text("Prints this help text.")
-      override def showUsageOnError = true
+    val javaLibPath = getEnvOrElse("JAVA_LIB_PATH", "/usr/lib/jvm/default-java/lib/")
 
-      opt[String]("server").action( (x,c) => c.copy(server = x)).text("The url to the Delphi server")
-      opt[Unit] (name = "raw").action((_,c) => c.copy(raw = true)).text("Output the raw results")
-      opt[Unit] (name = "silent").action((_,c) => c.copy(silent = true)).text("Suppress non-result output")
+    val trustStorePath = getEnvOrElse("JAVA_TRUSTSTORE", "/usr/lib/jvm/default-java/lib/security/cacerts")
 
-      checkConfig(c => if (c.server.isEmpty()) failure("Option server is required.") else success)
+    System.setProperty("java.library.path", javaLibPath)
+    System.setProperty("javax.net.ssl.trustStore", trustStorePath)
 
-      cmd("test").action((_,c) => c.copy(mode = "test"))
+    cliParser.parse(args, Config()) match {
+      case Some(c) =>
 
-      cmd("retrieve").action((s,c) => c.copy(mode = "retrieve"))
-        .text("Retrieve a project's description, specified by ID.")
-        .children(
-          arg[String]("id").action((x, c) => c.copy(id = x)).text("The ID of the project to retrieve"),
-          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
-          opt[Unit]('f', "file").action((_, c) => c.copy(opts = List("file"))).text("Use to load the ID from file, " +
-            "with the filepath given in place of the ID")
-        )
 
-      cmd("search").action((s, c) => c.copy(mode = "search"))
-        .text("Search artifact using a query.")
-        .children(
-          arg[String]("query").action((x,c) => c.copy(query = x)).text("The query to be used."),
-          opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
-          opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned."),
-          opt[Unit](name="list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)"),
-          opt[Int]("timeout").action((x, c) => c.copy(timeout = Some(x))).text("Timeout in seconds.")
-        )
+        implicit val config: Config = c
+        implicit val backend: SttpBackend[Id, Nothing] = HttpURLConnectionBackend()
+
+        if (!config.silent) cliParser.showHeader()
+
+        config.mode match {
+          case "test" => TestCommand.execute
+          case "retrieve" => RetrieveCommand.execute
+          case "search" => SearchCommand.execute
+          case x => config.consoleOutput.outputError(s"Unknown command: $x")
+        }
+
+
+      case None =>
     }
+
   }
 
+  private def cliParser = {
+    val parser = {
+      new scopt.OptionParser[Config]("delphi-cli") {
+        head("Delphi Command Line Tool", s"(${BuildInfo.version})")
 
-  cliParser.parse(args, Config()) match {
-    case Some(config) =>
-      if (!config.silent) cliParser.showHeader()
-      config.mode match {
-        case "test" => TestCommand.execute(config)
-        case "retrieve" => RetrieveCommand.execute(config)
-        case "search" => SearchCommand.execute(config)
-        case x => config.consoleOutput.outputError(s"Unknown command: $x")
+        version("version").text("Prints the version of the command line tool.")
+
+        help("help").text("Prints this help text.")
+
+        override def showUsageOnError = true
+
+        opt[String]("server").action((x, c) => c.copy(server = x)).text("The url to the Delphi server")
+        opt[Unit](name = "raw").action((_, c) => c.copy(raw = true)).text("Output the raw results")
+        opt[Unit](name = "silent").action((_, c) => c.copy(silent = true)).text("Suppress non-result output")
+
+        checkConfig(c => if (c.server.isEmpty()) failure("Option server is required.") else success)
+
+        cmd("test").action((_, c) => c.copy(mode = "test"))
+
+        cmd("retrieve").action((s, c) => c.copy(mode = "retrieve"))
+          .text("Retrieve a project's description, specified by ID.")
+          .children(
+            arg[String]("id").action((x, c) => c.copy(id = x)).text("The ID of the project to retrieve"),
+            opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
+            opt[Unit]('f', "file").action((_, c) => c.copy(opts = List("file"))).text("Use to load the ID from file, " +
+              "with the filepath given in place of the ID")
+          )
+
+        cmd("search").action((s, c) => c.copy(mode = "search"))
+          .text("Search artifact using a query.")
+          .children(
+            arg[String]("query").action((x, c) => c.copy(query = x)).text("The query to be used."),
+            opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
+            opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned."),
+            opt[Unit](name = "list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)"),
+            opt[Int]("timeout").action((x, c) => c.copy(timeout = Some(x))).text("Timeout in seconds.")
+          )
       }
-
-    case None =>
-  }
-
-
-  val poolShutdown = Http().shutdownAllConnectionPools()
-  Await.result(poolShutdown, Duration.Inf)
-
-  implicit val ec: ExecutionContext = system.dispatcher
-  val terminationFuture = system.terminate()
-
-  terminationFuture.onComplete {
-    sys.exit(0)
+    }
+    parser
   }
 }
