@@ -1,10 +1,36 @@
-scalaVersion := "2.12.4"
+ThisBuild / organization := "de.upb.cs.swt.delphi"
+ThisBuild / organizationName := "Delphi Project"
+ThisBuild / organizationHomepage := Some(url("https://delphi.cs.uni-paderborn.de/"))
+
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/delphi-hub/delphi-cli"),
+    "scm:git@github.com:delphi-hub/delphi-cli.git"
+  )
+)
+
+ThisBuild / developers := List(
+  Developer(
+    id    = "bhermann",
+    name  = "Ben Hermann",
+    email = "ben.hermann@upb.de",
+    url   = url("https://www.thewhitespace.de")
+  )
+)
+
+ThisBuild / description := "The command line client for Delphi"
+ThisBuild / licenses := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt"))
+ThisBuild / homepage := Some(url("https://delphi.cs.uni-paderborn.de/"))
+
+lazy val scala212 = "2.12.10"
+lazy val scala213 = "2.13.1"
+lazy val supportedScalaVersions = List(scala212, scala213)
+
+ThisBuild / scalaVersion := scala213
 
 name := "delphi"
 version := "1.0.0-SNAPSHOT"
 maintainer := "Ben Hermann <ben.hermann@upb.de>"
-
-licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
 packageSummary := "Windows Package for the Delphi CLI"
 packageDescription := """Windows Package for the Delphi CLI"""
@@ -13,13 +39,26 @@ wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
+/*
 val akkaVersion = "2.5.14"
+
 val akkaHttpVersion = "10.1.5"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
   "com.typesafe.akka" %% "akka-stream" % akkaVersion
+)
+ */
+val http4sVersion = "0.18.21"
+
+// Only necessary for SNAPSHOT releases
+resolvers += Resolver.sonatypeRepo("snapshots")
+
+libraryDependencies ++= Seq(
+  "org.http4s" %% "http4s-dsl" % http4sVersion,
+  "org.http4s" %% "http4s-blaze-client" % http4sVersion,
+  "org.http4s" %% "http4s-circe" % http4sVersion
 )
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
@@ -41,7 +80,8 @@ lazy val cli = (project in file(".")).
 
   settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage := "de.upb.cs.swt.delphi.cli"
+    buildInfoPackage := "de.upb.cs.swt.delphi.cli",
+    crossScalaVersions := supportedScalaVersions
   )
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle-config.xml"
 
