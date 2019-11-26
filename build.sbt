@@ -26,7 +26,7 @@ lazy val scala212 = "2.12.10"
 lazy val scala213 = "2.13.1"
 lazy val supportedScalaVersions = List(scala212, scala213)
 
-ThisBuild / scalaVersion := scala213
+ThisBuild / scalaVersion := scala212
 
 name := "delphi"
 version := "1.0.0-SNAPSHOT"
@@ -51,7 +51,7 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
-libraryDependencies += "io.spray" %% "spray-json" % "1.3.3"
+libraryDependencies += "io.spray" %% "spray-json" % "1.3.5"
 libraryDependencies += "de.vandermeer" % "asciitable" % "0.3.2"
 libraryDependencies += "com.lihaoyi" %% "fansi" % "0.2.5"
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
@@ -59,8 +59,8 @@ libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % "test"
 
 libraryDependencies ++= Seq(
-  "com.softwaremill.sttp" %% "core" % "1.5.4",
-  "com.softwaremill.sttp" %% "spray-json" % "1.5.4"
+  "com.softwaremill.sttp" %% "core" % "1.7.2",
+  "com.softwaremill.sttp" %% "spray-json" % "1.7.2"
 )
 
 
