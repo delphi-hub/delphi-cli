@@ -33,8 +33,9 @@ object DelphiCLI {
 
     val trustStorePath = getEnvOrElse("JAVA_TRUSTSTORE", "/usr/lib/jvm/default-java/lib/security/cacerts")
 
-    System.setProperty("java.library.path", javaLibPath)
-    System.setProperty("javax.net.ssl.trustStore", trustStorePath)
+    // This only is allowed to be set for GraalVM compiles...
+    //System.setProperty("java.library.path", javaLibPath)
+    //System.setProperty("javax.net.ssl.trustStore", trustStorePath)
 
     cliParser.parse(args, Config()) match {
       case Some(c) =>
@@ -43,12 +44,13 @@ object DelphiCLI {
         implicit val config: Config = c
         implicit val backend: SttpBackend[Id, Nothing] = HttpURLConnectionBackend()
 
-        if (!config.silent) cliParser.showHeader()
+        if (!config.silent && config.mode != "") cliParser.showHeader()
 
         config.mode match {
           case "test" => TestCommand.execute
           case "retrieve" => RetrieveCommand.execute
           case "search" => SearchCommand.execute
+          case "" => cliParser.showUsage()
           case x => config.consoleOutput.outputError(s"Unknown command: $x")
         }
 
