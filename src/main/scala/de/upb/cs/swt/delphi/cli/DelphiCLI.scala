@@ -50,6 +50,7 @@ object DelphiCLI {
           case "test" => TestCommand.execute
           case "retrieve" => RetrieveCommand.execute
           case "search" => SearchCommand.execute
+          case "features" => FeaturesCommand.execute
           case "" => cliParser.showUsage()
           case x => config.consoleOutput.outputError(s"Unknown command: $x")
         }
@@ -78,6 +79,9 @@ object DelphiCLI {
         checkConfig(c => if (c.server.isEmpty()) failure("Option server is required.") else success)
 
         cmd("test").action((_, c) => c.copy(mode = "test"))
+
+        cmd("features").action((_, c) => c.copy(mode = "features"))
+            .text("Retrieve the current list of features.")
 
         cmd("retrieve").action((s, c) => c.copy(mode = "retrieve"))
           .text("Retrieve a project's description, specified by ID.")

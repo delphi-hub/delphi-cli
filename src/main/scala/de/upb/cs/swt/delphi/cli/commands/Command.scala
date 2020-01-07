@@ -45,7 +45,7 @@ trait Command {
     val oldPath = serverUrl.path
     val reqUrl = serverUrl.path(oldPath ++ paths).params(parameters)
     val request = sttp.get(reqUrl)
-    config.consoleOutput.outputInformation(s"Sending request ${request.uri}")
+    //config.consoleOutput.outputInformation(s"Sending request ${request.uri}")
     val response = request.send()
     response.body match {
       case Left(value) =>

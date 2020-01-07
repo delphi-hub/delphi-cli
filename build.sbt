@@ -58,6 +58,9 @@ libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % "test"
 libraryDependencies += "joda-time" % "joda-time" % "2.10.5"
 
+libraryDependencies += "de.upb.cs.swt.delphi" %% "delphi-core" % "0.9.2"
+libraryDependencies += "de.upb.cs.swt.delphi" %% "delphi-client" % "0.9.2"
+
 libraryDependencies ++= Seq(
   "com.softwaremill.sttp" %% "core" % "1.7.2",
   "com.softwaremill.sttp" %% "spray-json" % "1.7.2"
