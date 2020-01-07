@@ -24,12 +24,12 @@ ThisBuild / homepage := Some(url("https://delphi.cs.uni-paderborn.de/"))
 
 lazy val scala212 = "2.12.10"
 lazy val scala213 = "2.13.1"
-lazy val supportedScalaVersions = List(scala212)
+lazy val supportedScalaVersions = List(scala213)
 
-ThisBuild / scalaVersion := scala212
+ThisBuild / scalaVersion := scala213
 
 name := "delphi"
-version := "1.0.0-SNAPSHOT"
+version := "0.9.5-SNAPSHOT"
 maintainer := "Ben Hermann <ben.hermann@upb.de>"
 
 packageSummary := "Windows Package for the Delphi CLI"
@@ -39,7 +39,7 @@ wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
-val http4sVersion = "0.18.21"
+val http4sVersion = "0.21.0-M6"
 
 // Only necessary for SNAPSHOT releases
 resolvers += Resolver.sonatypeRepo("snapshots")
@@ -50,13 +50,13 @@ libraryDependencies ++= Seq(
   "org.http4s" %% "http4s-circe" % http4sVersion
 )
 
-libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.1"
 libraryDependencies += "io.spray" %% "spray-json" % "1.3.5"
 libraryDependencies += "de.vandermeer" % "asciitable" % "0.3.2"
-libraryDependencies += "com.lihaoyi" %% "fansi" % "0.2.5"
-libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
+libraryDependencies += "com.lihaoyi" %% "fansi" % "0.2.7"
 libraryDependencies += "au.com.bytecode" % "opencsv" % "2.4"
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0" % "test"
+libraryDependencies += "joda-time" % "joda-time" % "2.10.5"
 
 libraryDependencies ++= Seq(
   "com.softwaremill.sttp" %% "core" % "1.7.2",
