@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.sprayJson._
 import de.upb.cs.swt.delphi.cli.Config
-import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
-import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
+import de.upb.cs.swt.delphi.cli.artifacts.{SearchResult, SearchResults}
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResultsJson._
 import spray.json._
 
 import scala.concurrent.duration._
@@ -43,10 +43,8 @@ object SearchCommand extends Command with DefaultJsonProtocol{
 
     information.apply(s"Searching for artifacts matching ${'"'}$query${'"'}.")
 
-
-    val queryParams = Map("pretty" -> "")
     val queryPayload: Query = Query(query,config.limit)
-    val searchUri = uri"${config.server}/search?$queryParams"
+    val searchUri = uri"${config.server}/search"
 
     val request = sttp.body(queryPayload.toJson).post(searchUri)
 
@@ -64,7 +62,7 @@ object SearchCommand extends Command with DefaultJsonProtocol{
 
     if (res.code == timeoutCode) {
 
-      error.apply(s"The query timed out after   ${took.toSeconds} seconds. " +
+      error.apply(s"The query timed out after ${took.toSeconds}%.0f seconds. " +
         "To set a longer timeout, use the --timeout option.")
     }
     val resStr = res.body match {
@@ -83,28 +81,27 @@ object SearchCommand extends Command with DefaultJsonProtocol{
       reportResult.apply(res)
     }
     if (!(config.raw || res.equals("")) || !config.csv.equals("")) {
-      val jsonArr = res.parseJson.asInstanceOf[JsArray].elements
-      val retrieveResults = jsonArr.map(r => r.convertTo[SearchResult]).toList
-      onProperSearchResults(retrieveResults)
-    }
-
-    def onProperSearchResults(sr: List[SearchResult]) = {
-
+      val retrieveResults = res.parseJson.convertTo[SearchResults]
+      val sr = retrieveResults.hits.toList
       val capMessage = {
-        config.limit match {
-          case Some(limit) if (limit <= sr.size)
-          => s"Results may be capped by result limit set to $limit."
-          case None if (sr.size >= 50)
-          => "Results may be capped by default limit of 50 returned results. Use --limit to extend the result set."
-          case _
-          => ""
+        if (sr.size < retrieveResults.totalHits ) {
+          config.limit match {
+            case Some(limit) if (limit <= sr.size)
+            => s"Results are capped by results limit set to $limit."
+            case None if (sr.size >= 50)
+            => "Results are capped by default limit of 50 returned results. Use --limit to extend the result set."
+            case _
+            => ""
+          }
+        } else {
+          ""
         }
       }
 
-      success.apply(s"Found ${sr.size} item(s). $capMessage")
+      success.apply(s"Found ${retrieveResults.totalHits} item(s). $capMessage")
       reportResult.apply(sr)
 
-      information.apply(f"Query took ${queryRuntime.toUnit(TimeUnit.SECONDS)}%.2fs.")
+      information.apply(f"Query roundtrip took ${queryRuntime.toUnit(TimeUnit.MILLISECONDS)}%.0fms.")
 
       if (!config.csv.equals("")) {
         exportResult.apply(sr)
