@@ -33,9 +33,7 @@ object RetrieveCommand extends Command {
 
   override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
 
-    //Checks whether the ID should be loaded from a file or not, and either returns the first line
-    //  of the given file if it is, or the specified ID otherwise
-    def checkTarget: String = {
+    val queriedId: String = {
       if (config.opts.contains("file")) {
         val source = Source.fromFile(config.args.head)
         val target = source.getLines.next()
@@ -47,8 +45,7 @@ object RetrieveCommand extends Command {
     }
 
     val result = executeGet(
-      Seq("retrieve", checkTarget),
-      Map("pretty" -> "")
+      Seq("retrieve", queriedId)
     )
 
     result.foreach(s => {
@@ -56,14 +53,9 @@ object RetrieveCommand extends Command {
         reportResult.apply(s)
       }
       if (!config.raw || !config.csv.equals("")) {
-
-        //TODO: Direct convertTo[List[RetrieveResult]] not working ???
-
-
         val jsonArr = s.parseJson.asInstanceOf[JsArray].elements
         val retrieveResults = jsonArr.map(r => r.convertTo[RetrieveResult])
 
-        success.apply(s"Found ${retrieveResults.size} item(s).")
         reportResult.apply(retrieveResults)
         if (!config.csv.equals("")) {
           exportResult.apply(retrieveResults)
