@@ -42,8 +42,8 @@ Our software is available as a binary release on [GitHub](https://github.com/del
 
 ```
 $ delphi --help
-Delphi Command Line Tool (1.0.0-SNAPSHOT)
-Usage: delphi [test|retrieve|search] [options] <args>...
+Delphi Command Line Tool (0.9.5-SNAPSHOT)
+Usage: delphi-cli [test|features|retrieve|search] [options] <args>...
 
   --version                Prints the version of the command line tool.
   --help                   Prints this help text.
