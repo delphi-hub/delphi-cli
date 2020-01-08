@@ -31,7 +31,7 @@ lazy val supportedScalaVersions = List(scala213)
 ThisBuild / scalaVersion := scala213
 
 name := "delphi"
-version := "0.9.5-SNAPSHOT"
+version := "0.9.6-SNAPSHOT"
 maintainer := "Ben Hermann <ben.hermann@upb.de>"
 
 packageSummary := "Windows Package for the Delphi CLI"
