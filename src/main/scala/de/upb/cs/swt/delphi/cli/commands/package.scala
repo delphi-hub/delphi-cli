@@ -13,22 +13,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+package de.upb.cs.swt.delphi.cli
 
-package de.upb.cs.swt.delphi.cli.commands
+import spray.json._
 
-import com.softwaremill.sttp.{Id, SttpBackend}
-import de.upb.cs.swt.delphi.cli.Config
+package object commands extends DefaultJsonProtocol {
 
-/**
-  * The implementation of the test command.
-  * Tries to connect to the Delphi server and reports on the results of the version call.
-  */
-object TestCommand extends Command {
-  override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
-    executeGet(Seq("version"))
-      .foreach(s => {
-        success.apply("Successfully contacted Delphi server. ")
-        information.apply("Server version: " + s)
-      })
-  }
+
+  case class Query(query: String,
+                   limit: Option[Int] = None)
+
+  implicit val queryFormat = jsonFormat2(Query)
+
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 The Delphi Team.
+// Copyright (C) 2020 The Delphi Team.
 // See the LICENCE file distributed with this work for additional
 // information regarding copyright ownership.
 //
@@ -15,20 +15,29 @@
 // limitations under the License.
 
 package de.upb.cs.swt.delphi.cli.commands
-
 import com.softwaremill.sttp.{Id, SttpBackend}
 import de.upb.cs.swt.delphi.cli.Config
+import de.upb.cs.swt.delphi.client.FieldDefinition
+import de.upb.cs.swt.delphi.client.FieldDefinitionJson._
+import spray.json._
 
-/**
-  * The implementation of the test command.
-  * Tries to connect to the Delphi server and reports on the results of the version call.
-  */
-object TestCommand extends Command {
+object FeaturesCommand extends Command {
   override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
-    executeGet(Seq("version"))
-      .foreach(s => {
-        success.apply("Successfully contacted Delphi server. ")
-        information.apply("Server version: " + s)
-      })
+    val result = executeGet(Seq("features"))
+
+    result.map(features => {
+      if (config.raw) {
+        reportResult.apply(features)
+      }
+      if (!config.raw || !config.csv.equals("")) {
+        val featureList = features.parseJson.convertTo[JsArray].elements.map(e => e.convertTo[FieldDefinition])
+        reportResult.apply(featureList)
+
+        if (!config.csv.equals("")) {
+          exportResult.apply(featureList)
+          information.apply("Results written to file '" + config.csv + "'")
+        }
+      }
+    })
   }
 }

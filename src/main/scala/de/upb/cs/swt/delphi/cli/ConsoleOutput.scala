@@ -17,6 +17,7 @@
 package de.upb.cs.swt.delphi.cli
 
 import de.upb.cs.swt.delphi.cli.artifacts.{RetrieveResult, SearchResult}
+import de.upb.cs.swt.delphi.client.FieldDefinition
 
 class ConsoleOutput(config: Config) {
 
@@ -45,6 +46,7 @@ class ConsoleOutput(config: Config) {
               }
             }
             case retrieveResults : Seq[RetrieveResult] if retrieveResults.head.isInstanceOf[RetrieveResult]  => ResultBeautifier.beautifyRetrieveResults(retrieveResults)
+            case featureResults : Seq[FieldDefinition] if featureResults.head.isInstanceOf[FieldDefinition] => ResultBeautifier.beautifyFeatures(featureResults)
             case _ => value.toString
           }
         }

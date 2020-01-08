@@ -16,17 +16,8 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes, Uri}
-import akka.stream.ActorMaterializer
-import akka.util.ByteString
+import com.softwaremill.sttp._
 import de.upb.cs.swt.delphi.cli.Config
-
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 /**
   * Represents the implementation of a command of the CLI
@@ -35,49 +26,45 @@ trait Command {
 
   /**
     * Executes the command implementation
+    *
     * @param config The current configuration for the command
     */
-  def execute(config: Config)(implicit system : ActorSystem): Unit
+  def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {}
+
 
   /**
-    * Implements a common request type using currying to avoid code duplication
-    * @param target The endpoint to perform a Get request on
-    * @param config The current configuration for the command
+    * Http GET request template
+    *
+    * @param target     Sub url in delphi server
+    * @param parameters Query params
+    * @return GET response
     */
-  protected def executeGet(target: String, parameters: Map[String, String] = Map())(config: Config, system : ActorSystem) : Option[String] = {
-    implicit val sys : ActorSystem = system
-    implicit val materializer = ActorMaterializer()
-    implicit val executionContext = sys.dispatcher
-
-    val uri = Uri(config.server)
-    config.consoleOutput.outputInformation(s"Contacting server ${uri}...")
-
-    val responseFuture = Http().singleRequest(HttpRequest(uri = uri.withPath(uri.path + target).withQuery(Query(parameters))))
-
-    responseFuture.onComplete {
-      case Failure(_) => error(config)(s"Could not reach server ${config.server}.")
-      case _ =>
+  protected def executeGet(paths: Seq[String], parameters: Map[String, String] = Map())
+                          (implicit config: Config, backend: SttpBackend[Id, Nothing]): Option[String] = {
+    val serverUrl = uri"${config.server}"
+    val oldPath = serverUrl.path
+    val reqUrl = serverUrl.path(oldPath ++ paths).params(parameters)
+    val request = sttp.get(reqUrl)
+    //config.consoleOutput.outputInformation(s"Sending request ${request.uri}")
+    val response = request.send()
+    response.body match {
+      case Left(value) =>
+        error.apply(s"Request failed:\n $value")
+        None
+      case Right(value) =>
+        Some(value)
     }
-
-    val result = Await.result(responseFuture, 30 seconds)
-    val resultString = result match {
-      case HttpResponse(StatusCodes.OK, headers, entity, _) =>
-        entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
-          Some(body.utf8String)
-        }
-      case resp @ HttpResponse(code, _, _, _) => {
-        error(config)("Artifact not found.")
-        resp.discardEntityBytes()
-        Future(None)
-      }
-    }
-
-    Await.result(resultString, Duration.Inf)
   }
 
+
   protected def information(implicit config: Config): String => Unit = config.consoleOutput.outputInformation _
+
   protected def reportResult(implicit config: Config): Any => Unit = config.consoleOutput.outputResult _
+
   protected def error(implicit config: Config): String => Unit = config.consoleOutput.outputError _
+
   protected def success(implicit config: Config): String => Unit = config.consoleOutput.outputSuccess _
+
+  protected def exportResult(implicit config: Config): Any => Unit = config.csvOutput.exportResult _
 
 }

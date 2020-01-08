@@ -17,6 +17,7 @@
 package de.upb.cs.swt.delphi.cli
 
 import de.upb.cs.swt.delphi.cli.artifacts.{RetrieveResult, SearchResult}
+import de.upb.cs.swt.delphi.client.FieldDefinition
 import de.vandermeer.asciitable.{AsciiTable, CWC_LongestLine}
 import de.vandermeer.asciithemes.{TA_Grid, TA_GridThemes}
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment
@@ -53,13 +54,13 @@ object ResultBeautifier {
       at.getRenderer.setCWC(new CWC_LongestLine)
       at.setPaddingLeft(1)
       at.setPaddingRight(1)
+
       at.getContext.setFrameTopMargin(1)
       at.getContext.setFrameBottomMargin(1)
       at.getContext().setGridTheme(TA_GridThemes.INSIDE)
 
 
       at.render()
-      //CustomAsciiTable.make(table)
     }
   }
 
@@ -112,4 +113,36 @@ object ResultBeautifier {
 
     }.fold("")(_ + _)
   }
+  def beautifyFeatures(results : Seq[FieldDefinition]) : String = {
+
+    if (results.size == 0) {
+      ""
+    } else {
+      val tableHeader = Seq ("Name", "Description")
+      val tableBody = results.sortBy(f => f.name).map(f => Seq(f.name, f.description))
+      val table = tableBody.+:(tableHeader)
+
+      val at = new AsciiTable()
+
+      at.setTextAlignment(TextAlignment.JUSTIFIED_LEFT)
+      at.getContext().setWidth(80)
+
+      // add header
+      at.addRule()
+      at.addRow(table.head.asJavaCollection)
+      at.addRule()
+
+      // add body
+      table.tail.foreach { row: Iterable[String] =>  at.addRow(row.asJavaCollection) }
+
+      at.setPaddingLeft(1)
+      at.setPaddingRight(1)
+      at.getContext.setFrameTopMargin(1)
+      at.getContext.setFrameBottomMargin(1)
+      //at.getContext().setGridTheme(TA_GridThemes.)
+      at.addRule()
+      at.render()
+    }
+  }
+
 }

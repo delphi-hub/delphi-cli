@@ -1,14 +1,14 @@
-# Delphi Command-Line Interface (CLI)
+# Delphi Command-Line Interface (CLI) <img src="https://github.com/delphi-hub/delphi/raw/master/img/delphi.png" align="right" height=140/>
 
 The command-line interface for the Delphi platform.
 
 We are currently in pre-alpha state! There is no release and the code in
 this repository is purely experimental!
 
-|branch | status | codacy | snyk |
-| :---: | :---: | :---: | :---: |  
-| master | [![Build Status](https://travis-ci.org/delphi-hub/delphi-cli.svg?branch=master)](https://travis-ci.org/delphi-hub/delphi-cli) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/47046de0e8d64ae4b76191b7dae80075)](https://www.codacy.com/app/delphi-hub/delphi-cli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=delphi-hub/delphi-cli&amp;utm_campaign=Badge_Grade)| [![Known Vulnerabilities](https://snyk.io/test/github/delphi-hub/delphi-cli/badge.svg?targetFile=build.sbt)](https://snyk.io/test/github/delphi-hub/delphi-cli?targetFile=build.sbt) |
-| develop | [![Build Status](https://travis-ci.org/delphi-hub/delphi-cli.svg?branch=develop)](https://travis-ci.org/delphi-hub/delphi-cli) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/47046de0e8d64ae4b76191b7dae80075?branch=develop)](https://www.codacy.com/app/delphi-hub/delphi-cli?branch=develop&amp;utm_source=github.com&amp;utm_medium=referral&amp;utm_content=delphi-hub/delphi-cli&amp;utm_campaign=Badge_Grade)| [![Known Vulnerabilities](https://snyk.io/test/github/delphi-hub/delphi-cli/develop/badge.svg?targetFile=build.sbt)](https://snyk.io/test/github/delphi-hub/delphi-cli/develop?targetFile=build.sbt)
+|branch | status | codacy | coverage | snyk |
+| :---: | :---: | :---: | :---: | :---: |  
+| master | [![Build Status](https://travis-ci.org/delphi-hub/delphi-cli.svg?branch=master)](https://travis-ci.org/delphi-hub/delphi-cli) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/47046de0e8d64ae4b76191b7dae80075)](https://www.codacy.com/app/delphi-hub/delphi-cli?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=delphi-hub/delphi-cli&amp;utm_campaign=Badge_Grade) | [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/47046de0e8d64ae4b76191b7dae80075)](https://www.codacy.com/manual/delphi-hub/delphi-cli?utm_source=github.com&utm_medium=referral&utm_content=delphi-hub/delphi-cli&utm_campaign=Badge_Coverage) | [![Known Vulnerabilities](https://snyk.io/test/github/delphi-hub/delphi-cli/badge.svg?targetFile=build.sbt)](https://snyk.io/test/github/delphi-hub/delphi-cli?targetFile=build.sbt) |
+| develop | [![Build Status](https://travis-ci.org/delphi-hub/delphi-cli.svg?branch=develop)](https://travis-ci.org/delphi-hub/delphi-cli) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/47046de0e8d64ae4b76191b7dae80075?branch=develop)](https://www.codacy.com/app/delphi-hub/delphi-cli?branch=develop&amp;utm_source=github.com&amp;utm_medium=referral&amp;utm_content=delphi-hub/delphi-cli&amp;utm_campaign=Badge_Grade)| [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/47046de0e8d64ae4b76191b7dae80075)](https://www.codacy.com/manual/delphi-hub/delphi-cli?utm_source=github.com&utm_medium=referral&utm_content=delphi-hub/delphi-cli&utm_campaign=Badge_Coverage) |  [![Known Vulnerabilities](https://snyk.io/test/github/delphi-hub/delphi-cli/develop/badge.svg?targetFile=build.sbt)](https://snyk.io/test/github/delphi-hub/delphi-cli/develop?targetFile=build.sbt)
 
 ## What is the Delphi Command-Line Interface?
 
@@ -42,8 +42,8 @@ Our software is available as a binary release on [GitHub](https://github.com/del
 
 ```
 $ delphi --help
-Delphi Command Line Tool (1.0.0-SNAPSHOT)
-Usage: delphi [test|retrieve|search] [options] <args>...
+Delphi Command Line Tool (0.9.5-SNAPSHOT)
+Usage: delphi-cli [test|features|retrieve|search] [options] <args>...
 
   --version                Prints the version of the command line tool.
   --help                   Prints this help text.

@@ -18,99 +18,96 @@ package de.upb.cs.swt.delphi.cli.commands
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
-import akka.util.ByteString
+import com.softwaremill.sttp._
+import com.softwaremill.sttp.sprayJson._
 import de.upb.cs.swt.delphi.cli.Config
-import de.upb.cs.swt.delphi.cli.artifacts.SearchResult
-import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import spray.json.DefaultJsonProtocol
+import de.upb.cs.swt.delphi.cli.artifacts.{SearchResult, SearchResults}
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResultsJson._
+import spray.json._
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
 
-object SearchCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
+object SearchCommand extends Command with DefaultJsonProtocol{
+
+  val searchTimeout = 10.seconds
+  val timeoutCode = 408
+
   /**
     * Executes the command implementation
     *
     * @param config The current configuration for the command
     */
-  override def execute(config: Config)(implicit system: ActorSystem): Unit = {
-    implicit val ec = system.dispatcher
-    implicit val materializer = ActorMaterializer()
+  override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
 
     def query = config.query
 
-    information(config)(s"Searching for artifacts matching ${'"'}$query${'"'}.")
+    information.apply(s"Searching for artifacts matching ${'"'}$query${'"'}.")
+
+    val queryPayload: Query = Query(query,config.limit)
+    val searchUri = uri"${config.server}/search"
+
+    val request = sttp.body(queryPayload.toJson).post(searchUri)
+
+    val (res, time) = processRequest(request)
+    res.foreach(processResults(_, time))
+  }
+
+  private def processRequest(req: Request[String, Nothing])
+                            (implicit config: Config,
+                             backend: SttpBackend[Id, Nothing]): (Option[String], FiniteDuration) = {
     val start = System.nanoTime()
+    val res: Id[Response[String]] = req.readTimeout(searchTimeout).send()
+    val end = System.nanoTime()
+    val took = (end - start).nanos
 
-    implicit val queryFormat = jsonFormat2(Query)
-    val baseUri = Uri(config.server)
-    val prettyParam = Map("pretty" -> "")
-    val searchUri = baseUri.withPath(baseUri.path + "/search").withQuery(akka.http.scaladsl.model.Uri.Query(prettyParam))
-    val responseFuture = Marshal(Query(query, config.limit)).to[RequestEntity] flatMap { entity =>
-      Http().singleRequest(HttpRequest(uri = searchUri, method = HttpMethods.POST, entity = entity))
+    if (res.code == timeoutCode) {
+
+      error.apply(s"The query timed out after ${took.toSeconds}%.0f seconds. " +
+        "To set a longer timeout, use the --timeout option.")
     }
+    val resStr = res.body match {
+      case Left(v) =>
+        error.apply(s"Search request failed \n $v")
+        None
+      case Right(v) =>
+        Some(v)
+    }
+    (resStr, took)
+  }
 
-    val response = Await.result(responseFuture, 10 seconds)
-    val resultFuture: Future[String] = response match {
-      case HttpResponse(StatusCodes.OK, headers, entity, _) =>
-        entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
-          body.utf8String
+  private def processResults(res: String, queryRuntime: FiniteDuration)(implicit config: Config) = {
+
+    if (config.raw || res.equals("")) {
+      reportResult.apply(res)
+    }
+    if (!(config.raw || res.equals("")) || !config.csv.equals("")) {
+      val retrieveResults = res.parseJson.convertTo[SearchResults]
+      val sr = retrieveResults.hits.toList
+      val capMessage = {
+        if (sr.size < retrieveResults.totalHits ) {
+          config.limit match {
+            case Some(limit) if (limit <= sr.size)
+            => s"Results are capped by results limit set to $limit."
+            case None if (sr.size >= 50)
+            => "Results are capped by default limit of 50 returned results. Use --limit to extend the result set."
+            case _
+            => ""
+          }
+        } else {
+          ""
         }
-      case resp@HttpResponse(code, _, _, _) => {
-        error(config)("Request failed, response code: " + code)
-        resp.discardEntityBytes()
-        Future("")
       }
-    }
 
-    val result = Await.result(resultFuture, Duration.Inf)
+      success.apply(s"Found ${retrieveResults.totalHits} item(s). $capMessage")
+      reportResult.apply(sr)
 
-    val took = (System.nanoTime() - start).nanos.toUnit(TimeUnit.SECONDS)
+      information.apply(f"Query roundtrip took ${queryRuntime.toUnit(TimeUnit.MILLISECONDS)}%.0fms.")
 
-    if (config.raw || result.equals("")) {
-      reportResult(config)(result)
-    } else {
-      val unmarshalledFuture = Unmarshal(result).to[List[SearchResult]]
-
-      val processFuture = unmarshalledFuture.transform {
-        case Success(unmarshalled) => {
-          processResults(config, unmarshalled, took)
-          Success(unmarshalled)
-        }
-        case Failure(e) => {
-          error(config)(result)
-          Failure(e)
-        }
+      if (!config.csv.equals("")) {
+        exportResult.apply(sr)
+        information.apply("Results written to file '" + config.csv + "'")
       }
     }
   }
-
-  private def processResults(config: Config, results: List[SearchResult], queryRuntime: Double) = {
-    val capMessage = {
-      config.limit match {
-        case Some(limit) if (limit <= results.size)
-        => s"Results may be capped by result limit set to $limit."
-        case None if (results.size >= 50)
-        => "Results may be capped by default limit of 50 returned results. Use --limit to extend the result set."
-        case _
-        => ""
-      }
-    }
-    success(config)(s"Found ${results.size} item(s). $capMessage")
-    reportResult(config)(results)
-
-    information(config)(f"Query took $queryRuntime%.2fs.")
-  }
-
-  case class Query(query: String,
-                   limit: Option[Int] = None)
 
 }

@@ -16,34 +16,24 @@
 
 package de.upb.cs.swt.delphi.cli.commands
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
-import de.upb.cs.swt.delphi.cli.Config
+import com.softwaremill.sttp.{Id, SttpBackend}
+import de.upb.cs.swt.delphi.cli._
 import de.upb.cs.swt.delphi.cli.artifacts.RetrieveResult
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson._
-import spray.json.DefaultJsonProtocol
+import spray.json._
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.io.Source
-import scala.util.{Failure, Success}
 
 /**
   * The implementation of the retrieve command.
   * Retrieves the contents of the file at the endpoint specified by the config file, and prints them to stdout
   */
-object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonProtocol {
+object RetrieveCommand extends Command {
 
 
-  override def execute(config: Config)(implicit system: ActorSystem): Unit = {
-    implicit val ec = system.dispatcher
-    implicit val materializer = ActorMaterializer()
+  override def execute(implicit config: Config, backend: SttpBackend[Id, Nothing]): Unit = {
 
-    //Checks whether the ID should be loaded from a file or not, and either returns the first line
-    //  of the given file if it is, or the specified ID otherwise
-    def checkTarget: String = {
+    val queriedId: String = {
       if (config.opts.contains("file")) {
         val source = Source.fromFile(config.args.head)
         val target = source.getLines.next()
@@ -55,28 +45,21 @@ object RetrieveCommand extends Command with SprayJsonSupport with DefaultJsonPro
     }
 
     val result = executeGet(
-      s"/retrieve/$checkTarget",
-      Map("pretty" -> "")
-    )(config, system)
+      Seq("retrieve", queriedId)
+    )
 
-    result.map(s => {
+    result.foreach(s => {
       if (config.raw) {
-        reportResult(config)(s)
-      } else {
-        val unmarshalledFuture = Unmarshal(s).to[List[RetrieveResult]]
+        reportResult.apply(s)
+      }
+      if (!config.raw || !config.csv.equals("")) {
+        val jsonArr = s.parseJson.asInstanceOf[JsArray].elements
+        val retrieveResults = jsonArr.map(r => r.convertTo[RetrieveResult])
 
-        unmarshalledFuture.transform {
-          case Success(unmarshalled) => {
-            val unmarshalled = Await.result(unmarshalledFuture, Duration.Inf)
-            success(config)(s"Found ${unmarshalled.size} item(s).")
-            reportResult(config)(unmarshalled)
-
-            Success(unmarshalled)
-          }
-          case Failure(e) => {
-            error(config)(s)
-            Failure(e)
-          }
+        reportResult.apply(retrieveResults)
+        if (!config.csv.equals("")) {
+          exportResult.apply(retrieveResults)
+          information.apply("Results written to file '" + config.csv + "'")
         }
       }
     })

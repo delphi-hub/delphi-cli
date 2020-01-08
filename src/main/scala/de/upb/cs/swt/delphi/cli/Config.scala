@@ -23,18 +23,21 @@ package de.upb.cs.swt.delphi.cli
   * @param verbose Marker if logging should be verbose
   * @param mode    The command to be run
   */
-case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api/"),
+case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://delphi.cs.uni-paderborn.de/api"),
                   verbose: Boolean = false,
                   raw: Boolean = false,
+                  csv: String = "",
                   silent: Boolean = false,
                   list : Boolean = false,
                   mode: String = "",
                   query : String = "",
                   limit : Option[Int] = None,
                   id : String = "",
+                  timeout : Option[Int] = None,
                   args: List[String] = List(),
                   opts: List[String] = List()) {
 
   lazy val consoleOutput = new ConsoleOutput(this)
+  lazy val csvOutput = new CsvOutput(this)
 
 }
