@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.docker._
+
 ThisBuild / organization := "de.upb.cs.swt.delphi"
 ThisBuild / organizationName := "Delphi Project"
 ThisBuild / organizationHomepage := Some(url("https://delphi.cs.uni-paderborn.de/"))
@@ -68,10 +70,23 @@ libraryDependencies ++= Seq(
 
 
 debianPackageDependencies := Seq("java8-runtime-headless")
+mainClass in Compile := Some("de.upb.cs.swt.delphi.cli.DelphiCLI")
+discoveredMainClasses in Compile := Seq()
 
 lazy val cli = (project in file(".")).
   enablePlugins(JavaAppPackaging).
   enablePlugins(DockerPlugin).
+  settings(
+    dockerBaseImage := "openjdk:jre-alpine",
+    dockerAlias := com.typesafe.sbt.packager.docker.DockerAlias(None, Some("delphihub"),"delphi-cli", Some(version.value)),
+    dockerEntrypoint := Seq("/bin/bash"),
+    dockerCommands ++= Seq(
+      Cmd("USER", "root"),
+      Cmd("RUN", "apk", "--no-cache", "add", "bash"),
+      Cmd("RUN", "ln", "-s", "/opt/docker/bin/delphi", "/usr/bin/delphi" ),
+      Cmd("USER", "daemon")
+    )
+  ).
   enablePlugins(ScalastylePlugin).
   enablePlugins(BuildInfoPlugin).
   enablePlugins(DebianPlugin).
