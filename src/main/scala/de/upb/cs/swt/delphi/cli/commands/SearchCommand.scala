@@ -116,7 +116,4 @@ object SearchCommand extends Command with DefaultJsonProtocol{
     }
   }
 
-
-
-
 }
