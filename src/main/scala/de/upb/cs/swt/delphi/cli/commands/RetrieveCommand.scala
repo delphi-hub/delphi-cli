@@ -62,6 +62,13 @@ object RetrieveCommand extends Command {
           information.apply("Results written to file '" + config.csv + "'")
         }
       }
+      if(!config.output.equals("")){
+        val jsonArr = s.parseJson.asInstanceOf[JsArray].elements
+        val retrieveResults = jsonArr.map(r => r.convertTo[RetrieveResult])
+
+        new FileOutput(executeGet(Seq("version")).getOrElse("UNKNOWN"))
+          .writeRetrieveResults(retrieveResults)
+      }
     })
   }
 }

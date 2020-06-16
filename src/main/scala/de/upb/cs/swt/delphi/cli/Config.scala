@@ -16,6 +16,8 @@
 
 package de.upb.cs.swt.delphi.cli
 
+import de.upb.cs.swt.delphi.cli.OutputMode.OutputMode
+
 /**
   * Represents a configuration for the Delphi CLI
   *
@@ -27,6 +29,8 @@ case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://d
                   verbose: Boolean = false,
                   raw: Boolean = false,
                   csv: String = "",
+                  output: String = "",
+                  outputMode: Option[OutputMode] = None,
                   silent: Boolean = false,
                   list : Boolean = false,
                   mode: String = "",
@@ -40,4 +44,16 @@ case class Config(server: String = sys.env.getOrElse("DELPHI_SERVER", "https://d
   lazy val consoleOutput = new ConsoleOutput(this)
   lazy val csvOutput = new CsvOutput(this)
 
+}
+
+object OutputMode extends Enumeration {
+  type OutputMode = Value
+  val JarOnly, PomOnly, All = Value
+
+  def fromString(value:String): Option[OutputMode] = value.toLowerCase match {
+    case "jaronly" => Some(JarOnly)
+    case "pomonly" => Some(PomOnly)
+    case "all" => Some(All)
+    case _ => None
+  }
 }

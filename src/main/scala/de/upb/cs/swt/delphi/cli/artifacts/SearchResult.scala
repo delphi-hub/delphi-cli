@@ -16,7 +16,7 @@
 
 package de.upb.cs.swt.delphi.cli.artifacts
 
-import spray.json.DefaultJsonProtocol
+import spray.json.{DefaultJsonProtocol, JsValue, RootJsonFormat}
 
 trait Result{
   val id: String
@@ -24,6 +24,9 @@ trait Result{
   val metricResults: Map[String, Int]
 
   def toMavenIdentifier() : String = s"${metadata.groupId}:${metadata.artifactId}:${metadata.version}"
+
+  def toMavenRelativeUrl(): String =
+    s"${metadata.groupId.replace(".", "/")}/${metadata.artifactId}/${metadata.version}"
 
   def fieldNames() : List[String] = metricResults.keys.toList.sorted
 }
@@ -46,4 +49,13 @@ object SearchResultJson extends DefaultJsonProtocol {
   implicit val artifactFormat = jsonFormat5(ArtifactMetadata)
   implicit val searchResultFormat = jsonFormat3(SearchResult)
   implicit val retrieveResultFormat = jsonFormat3(RetrieveResult)
+
+  implicit object ResultJsonObject extends RootJsonFormat[Result] {
+    override def read(json: JsValue): Result = searchResultFormat.read(json)
+
+    override def write(obj: Result): JsValue = obj match {
+      case x: SearchResult => searchResultFormat.write(x)
+      case x: RetrieveResult => retrieveResultFormat.write(x)
+    }
+  }
 }
