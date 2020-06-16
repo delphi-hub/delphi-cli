@@ -24,7 +24,6 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import spray.json._
 
-import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson.searchResultFormat
 import de.upb.cs.swt.delphi.cli.artifacts.StorageMetadataJson.queryStorageMetadataFormat
 
 class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  backend: SttpBackend[Id, Nothing]){
@@ -41,13 +40,21 @@ class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  ba
     writer.close()
 
     val outputMode = config.outputMode.getOrElse(OutputMode.PomOnly)
+    var progressCnt = 0f
 
     info()
     info(f"Output Mode is ${outputMode.toString}, destination is ${folderPath.toString}")
+    info()
+    print("Downloading files: 00 %")
 
     results
       .map(r => r.toMavenRelativeUrl() + s"/${r.metadata.artifactId}-${r.metadata.version}")
       .map(relUrl =>  "https://repo1.maven.org/maven2/" + relUrl).foreach( urlWithoutExtension => {
+
+      print("\b\b\b\b")
+      val progressValue = (100f * progressCnt ).toInt / results.size
+      print(s"${if (progressValue < 10) f"0$progressValue" else progressValue} %")
+      progressCnt += 1
 
       var artifactsToRetrieve = Seq[String]()
       if (outputMode == OutputMode.PomOnly || outputMode == OutputMode.All){
@@ -56,7 +63,6 @@ class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  ba
       if(outputMode == OutputMode.JarOnly || outputMode == OutputMode.All){
         artifactsToRetrieve = artifactsToRetrieve ++ Seq(s"$urlWithoutExtension.jar")
       }
-
       artifactsToRetrieve.foreach( url => {
         sttp.get(uri"$url").response(asByteArray).send().body match {
           case Right(value) =>
@@ -66,9 +72,10 @@ class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  ba
             error(f"Failed to download artifact from $url, got: $value")
         }
       })
-
     })
-
+    print("\b\b\b\b100 %")
+    info()
+    info()
     info(f"Successfully wrote results to $folderPath.")
   }
 
