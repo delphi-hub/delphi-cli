@@ -20,8 +20,8 @@ import java.util.concurrent.TimeUnit
 
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.sprayJson._
-import de.upb.cs.swt.delphi.cli.Config
-import de.upb.cs.swt.delphi.cli.artifacts.{SearchResult, SearchResults}
+import de.upb.cs.swt.delphi.cli.{Config, FileOutput}
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResults
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultsJson._
 import spray.json._
 
@@ -75,7 +75,8 @@ object SearchCommand extends Command with DefaultJsonProtocol{
     (resStr, took)
   }
 
-  private def processResults(res: String, queryRuntime: FiniteDuration)(implicit config: Config) = {
+  private def processResults(res: String, queryRuntime: FiniteDuration)
+                            (implicit config: Config, backend: SttpBackend[Id, Nothing]) = {
 
     if (config.raw || res.equals("")) {
       reportResult.apply(res)
@@ -103,11 +104,19 @@ object SearchCommand extends Command with DefaultJsonProtocol{
 
       information.apply(f"Query roundtrip took ${queryRuntime.toUnit(TimeUnit.MILLISECONDS)}%.0fms.")
 
+      if (!config.output.equals("")){
+        val output = new FileOutput(executeGet(Seq("version")).getOrElse("UNKNOWN"))
+        output.writeSearchResults(sr)
+      }
+
       if (!config.csv.equals("")) {
         exportResult.apply(sr)
         information.apply("Results written to file '" + config.csv + "'")
       }
     }
   }
+
+
+
 
 }

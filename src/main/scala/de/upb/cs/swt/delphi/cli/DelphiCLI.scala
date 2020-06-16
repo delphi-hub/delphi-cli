@@ -16,6 +16,8 @@
 
 package de.upb.cs.swt.delphi.cli
 
+import java.nio.file.{Files, Paths}
+
 import com.softwaremill.sttp._
 import de.upb.cs.swt.delphi.cli.commands._
 
@@ -99,7 +101,18 @@ object DelphiCLI {
             opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
             opt[Int]("limit").action((x, c) => c.copy(limit = Some(x))).text("The maximal number of results returned."),
             opt[Unit](name = "list").action((_, c) => c.copy(list = true)).text("Output results as list (raw option overrides this)"),
-            opt[Int]("timeout").action((x, c) => c.copy(timeout = Some(x))).text("Timeout in seconds.")
+            opt[Int]("timeout").action((x, c) => c.copy(timeout = Some(x))).text("Timeout in seconds."),
+            opt[String](name = "output")
+              .validate(x => if (Files.isDirectory(Paths.get(x))) success else failure(f"Output directory not found at $x"))
+              .action((x, c) => c.copy(output = x))
+              .text("Directory to write the search results to"),
+            opt[String](name = "outputmode")
+              .validate(x => OutputMode.fromString(x) match {
+                case Some(_) => success
+                case None => failure("Only JarOnly, PomOnly and All are supported for output modes.")
+              })
+              .action((x, c) => c.copy(outputMode = OutputMode.fromString(x)))
+              .text("Defines what to store. Supported are JarOnly, PomOnly and All. Defaults to PomOnly. Requires output to be set.")
           )
       }
     }

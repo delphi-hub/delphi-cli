@@ -25,6 +25,9 @@ trait Result{
 
   def toMavenIdentifier() : String = s"${metadata.groupId}:${metadata.artifactId}:${metadata.version}"
 
+  def toMavenRelativeUrl(): String =
+    s"${metadata.groupId.replace(".", "/")}/${metadata.artifactId}/${metadata.version}"
+
   def fieldNames() : List[String] = metricResults.keys.toList.sorted
 }
 
