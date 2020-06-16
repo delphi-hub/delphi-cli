@@ -19,31 +19,52 @@ import java.io.{BufferedWriter, FileOutputStream, FileWriter}
 import java.nio.file.{Files, Paths}
 
 import com.softwaremill.sttp._
-import de.upb.cs.swt.delphi.cli.artifacts.{QueryStorageMetadata, SearchResult}
+import de.upb.cs.swt.delphi.cli.artifacts.{QueryStorageMetadata, Result, RetrieveResult, SearchResult}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import spray.json._
-
 import de.upb.cs.swt.delphi.cli.artifacts.StorageMetadataJson.queryStorageMetadataFormat
 
 class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  backend: SttpBackend[Id, Nothing]){
 
-  def writeSearchResults(results: List[SearchResult]) : Unit = {
+  def writeQueryResults(results: List[SearchResult]): Unit = {
     val metadata = buildQueryMetadata(results)
 
     val folderPath = Paths.get(config.output, DateTimeFormat.forPattern("YYYY-MM-dd_HH_mm_ss").print(metadata.timestamp))
     Files.createDirectory(folderPath)
 
-    val metadataPath = Paths.get(folderPath.toString, "query-metadata.json").toString
+    downloadResultFiles(results, metadata, folderPath.toString)
+  }
+
+  def writeRetrieveResults(results: Seq[RetrieveResult]): Unit = {
+    val metadata = buildRetrieveMetadata(results)
+    val first = results.head
+
+    val timestamp = DateTimeFormat.forPattern("YYYY-MM-dd_HH_mm_ss").print(metadata.timestamp)
+    val folderPath = Paths.get(config.output, s"${first.metadata.artifactId}-${first.metadata.version}-$timestamp")
+    Files.createDirectory(folderPath)
+
+    downloadResultFiles(results, metadata, folderPath.toString)
+  }
+
+
+  private def downloadResultFiles(results: Seq[Result], metadata: QueryStorageMetadata, folderPath: String) : Unit = {
+    // Write Metadata first
+    val metadataPath = Paths.get(folderPath, "query-metadata.json").toString
     val writer = new BufferedWriter(new FileWriter(metadataPath))
     writer.write(metadata.toJson.prettyPrint)
     writer.close()
 
     val outputMode = config.outputMode.getOrElse(OutputMode.PomOnly)
-    var progressCnt = 0f
 
     info()
-    info(f"Output Mode is ${outputMode.toString}, destination is ${folderPath.toString}")
+    outputMode match {
+      case OutputMode.PomOnly => info(f"All associated POM files will be stored in $folderPath")
+      case OutputMode.JarOnly => info(f"All associated JAR files will be stored in $folderPath")
+      case _ => info(f"All associated JAR and POM files will be stored in $folderPath")
+    }
+    var progressCnt = 0f
+
     info()
     print("Downloading files: 00 %")
 
@@ -51,9 +72,7 @@ class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  ba
       .map(r => r.toMavenRelativeUrl() + s"/${r.metadata.artifactId}-${r.metadata.version}")
       .map(relUrl =>  "https://repo1.maven.org/maven2/" + relUrl).foreach( urlWithoutExtension => {
 
-      print("\b\b\b\b")
-      val progressValue = (100f * progressCnt ).toInt / results.size
-      print(s"${if (progressValue < 10) f"0$progressValue" else progressValue} %")
+      writeProgressValue((100f * progressCnt ).toInt / results.size)
       progressCnt += 1
 
       var artifactsToRetrieve = Seq[String]()
@@ -65,15 +84,13 @@ class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  ba
       }
       artifactsToRetrieve.foreach( url => {
         sttp.get(uri"$url").response(asByteArray).send().body match {
-          case Right(value) =>
-            new FileOutputStream(Paths.get(folderPath.toString, url.splitAt(url.lastIndexOf('/'))._2).toString)
-              .write(value)
-          case Left(value) =>
-            error(f"Failed to download artifact from $url, got: $value")
+          case Right(value) => new FileOutputStream(Paths.get(folderPath, url.splitAt(url.lastIndexOf('/'))._2).toString)
+            .write(value)
+          case Left(value) => error(f"Failed to download artifact from $url, got: $value")
         }
       })
     })
-    print("\b\b\b\b100 %")
+    writeProgressValue(100)
     info()
     info()
     info(f"Successfully wrote results to $folderPath.")
@@ -82,7 +99,10 @@ class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  ba
   private def info(value: String = ""):Unit = config.consoleOutput.outputInformation(value)
   private def error(value: String = ""):Unit = config.consoleOutput.outputError(value)
 
-
+  private def writeProgressValue(progressValue: Int): Unit = {
+    print("\b\b\b\b")
+    print(s"${if (progressValue < 10) f"0$progressValue" else progressValue} %")
+  }
   private def buildQueryMetadata(results: List[SearchResult]) =
     QueryStorageMetadata( query = config.query,
       results = results,
@@ -91,6 +111,17 @@ class FileOutput (serverVersion: String = "UNKNOWN")(implicit config:Config,  ba
       clientVersion = BuildInfo.version,
       timestamp = DateTime.now(),
       resultLimit = config.limit.getOrElse(50),
+      outputMode = config.outputMode.getOrElse(OutputMode.PomOnly).toString
+    )
+
+  private def buildRetrieveMetadata(results: Seq[RetrieveResult]) =
+    QueryStorageMetadata(query = f"Retrieve ${config.id}",
+      results = results,
+      serverVersion = serverVersion,
+      serverUrl = config.server,
+      clientVersion = BuildInfo.version,
+      timestamp = DateTime.now(),
+      resultLimit = 1,
       outputMode = config.outputMode.getOrElse(OutputMode.PomOnly).toString
     )
 }

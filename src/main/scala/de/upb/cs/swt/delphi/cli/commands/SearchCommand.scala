@@ -106,7 +106,7 @@ object SearchCommand extends Command with DefaultJsonProtocol{
 
       if (!config.output.equals("")){
         val output = new FileOutput(executeGet(Seq("version")).getOrElse("UNKNOWN"))
-        output.writeSearchResults(sr)
+        output.writeQueryResults(sr)
       }
 
       if (!config.csv.equals("")) {

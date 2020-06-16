@@ -91,7 +91,18 @@ object DelphiCLI {
             arg[String]("id").action((x, c) => c.copy(id = x)).text("The ID of the project to retrieve"),
             opt[String]("csv").action((x, c) => c.copy(csv = x)).text("Path to the output .csv file (overwrites existing file)"),
             opt[Unit]('f', "file").action((_, c) => c.copy(opts = List("file"))).text("Use to load the ID from file, " +
-              "with the filepath given in place of the ID")
+              "with the filepath given in place of the ID"),
+            opt[String](name = "output")
+              .validate(x => if (Files.isDirectory(Paths.get(x))) success else failure(f"Output directory not found at $x"))
+              .action((x, c) => c.copy(output = x))
+              .text("Directory to write the result to"),
+            opt[String](name = "outputmode")
+              .validate(x => OutputMode.fromString(x) match {
+                case Some(_) => success
+                case None => failure("Only JarOnly, PomOnly and All are supported for output modes.")
+              })
+              .action((x, c) => c.copy(outputMode = OutputMode.fromString(x)))
+              .text("Defines what to store. Supported are JarOnly, PomOnly and All. Defaults to PomOnly. Requires output to be set.")
           )
 
         cmd("search").action((s, c) => c.copy(mode = "search"))

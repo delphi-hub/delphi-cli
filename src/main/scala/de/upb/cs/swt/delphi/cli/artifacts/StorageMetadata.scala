@@ -18,7 +18,7 @@ package de.upb.cs.swt.delphi.cli.artifacts
 
 import org.joda.time.DateTime
 import spray.json.{DefaultJsonProtocol, JsonFormat}
-import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson.searchResultFormat
+import de.upb.cs.swt.delphi.cli.artifacts.SearchResultJson.ResultJsonObject
 import de.upb.cs.swt.delphi.cli.artifacts.SearchResultsJson.DateJsonFormat
 
 trait StorageMetadata {
@@ -30,7 +30,7 @@ trait StorageMetadata {
 }
 
 case class QueryStorageMetadata(query: String,
-                                results: Seq[SearchResult],
+                                results: Seq[Result],
                                 resultLimit: Int,
                                 clientVersion: String,
                                 serverVersion: String,
