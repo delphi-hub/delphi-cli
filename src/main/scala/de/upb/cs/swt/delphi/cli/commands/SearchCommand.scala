@@ -26,6 +26,7 @@ import de.upb.cs.swt.delphi.cli.artifacts.SearchResultsJson._
 import spray.json._
 
 import scala.concurrent.duration._
+import scala.util.{Success, Try}
 
 object SearchCommand extends Command with DefaultJsonProtocol{
 
@@ -65,6 +66,26 @@ object SearchCommand extends Command with DefaultJsonProtocol{
       error.apply(s"The query timed out after ${took.toSeconds}%.0f seconds. " +
         "To set a longer timeout, use the --timeout option.")
     }
+
+    if (res.code == StatusCodes.BadRequest && !res.statusText.isEmpty) {
+      Try(res.statusText.parseJson) match {
+        case Success(value) =>
+          val errorDescription = value.asJsObject
+          val errorMessage = errorDescription.fields("msg").asInstanceOf[JsString].value
+
+          error.apply(f"Your query could not be processed: $errorMessage")
+
+          if (errorDescription.fields.contains("invalid_fields")) {
+            val invalidFields = errorDescription.fields("invalid_fields")
+              .asInstanceOf[JsArray].elements.map(_.asInstanceOf[JsString].value).mkString(", ")
+            error.apply(f"The following field names are invalid: $invalidFields")
+          }
+
+        case _ =>
+          error.apply("Your query could not be processed: Unknown error")
+      }
+    }
+
     val resStr = res.body match {
       case Left(v) =>
         error.apply(s"Search request failed \n $v")
