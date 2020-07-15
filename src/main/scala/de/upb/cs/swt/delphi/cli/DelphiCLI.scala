@@ -29,16 +29,6 @@ object DelphiCLI {
 
   def main(args: Array[String]): Unit = {
 
-    def getEnvOrElse(envVar: String, defaultPath: String) = sys.env.getOrElse(envVar, defaultPath)
-
-    val javaLibPath = getEnvOrElse("JAVA_LIB_PATH", "/usr/lib/jvm/default-java/lib/")
-
-    val trustStorePath = getEnvOrElse("JAVA_TRUSTSTORE", "/usr/lib/jvm/default-java/lib/security/cacerts")
-
-    // This only is allowed to be set for GraalVM compiles...
-    //System.setProperty("java.library.path", javaLibPath)
-    //System.setProperty("javax.net.ssl.trustStore", trustStorePath)
-
     cliParser.parse(args, Config()) match {
       case Some(c) =>
 

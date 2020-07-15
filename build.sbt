@@ -41,16 +41,8 @@ wixProductUpgradeId := "4552fb0e-e257-4dbd-9ecb-dba9dbacf424"
 
 scalastyleConfig := baseDirectory.value / "project" / "scalastyle_config.xml"
 
-val http4sVersion = "0.21.0-M6"
-
 // Only necessary for SNAPSHOT releases
 resolvers += Resolver.sonatypeRepo("snapshots")
-
-libraryDependencies ++= Seq(
-  "org.http4s" %% "http4s-dsl" % http4sVersion,
-  "org.http4s" %% "http4s-blaze-client" % http4sVersion,
-  "org.http4s" %% "http4s-circe" % http4sVersion
-)
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.1"
 libraryDependencies += "io.spray" %% "spray-json" % "1.3.5"
